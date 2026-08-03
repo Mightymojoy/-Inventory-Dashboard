@@ -1,0 +1,20 @@
+# 数据源与构建产物（含业务数据：库存/价格/销量，公开仓库不上传）
+*.xlsx
+*.xls
+~$*
+
+# 构建产物（内嵌业务数据）
+ITO库存看板.html
+inventory_data.json
+
+# 临时/测试文件
+_edgeprofile/
+_*.html
+_*.py
+_*.js
+_*.json
+*.log
+
+# Python
+__pycache__/
+*.pyc

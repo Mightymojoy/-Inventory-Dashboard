@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITO 库存看板 v0.9</title>
+<style>
+  :root{
+    --gold:#c9a962; --gold-soft:#e8dcc0; --gold-deep:#a8884a;
+    --bg:#faf9f6; --card:#ffffff; --ink:#2b2b2b; --muted:#8a857c;
+    --line:#ececec; --line2:#f2efe9;
+    --red:#d9534f; --orange:#e8893b; --yellow:#e0b53b; --green:#3a9d6e; --grey:#7a8794; --slate:#9aa7b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  /* 全局错误条 */
+  #jsError{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--red);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.5px}
+  .brand .mark{width:30px;height:30px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#fff}
+  .ver{font-size:11px;color:var(--gold-deep);border:1px solid var(--gold-soft);background:#fbf6ea;padding:2px 8px;border-radius:20px;font-weight:600}
+  .spacer{flex:1}
+  .meta{font-size:12px;color:var(--muted);text-align:right;line-height:1.4}
+  .btn{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:8px;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+  .btn:hover{border-color:var(--gold);color:var(--gold-deep)}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+  .btn.gold:hover{background:var(--gold-deep);color:#fff}
+  /* 导航 tabs */
+  nav{background:var(--card);border-bottom:1px solid var(--line);padding:0 24px;display:flex;gap:4px;overflow-x:auto;position:sticky;top:59px;z-index:40}
+  nav button{background:none;border:none;padding:13px 16px;font-size:13.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+  nav button.active{color:var(--gold-deep);border-bottom-color:var(--gold);font-weight:600}
+  main{padding:22px 24px;max-width:1320px;margin:0 auto}
+  section{display:none;animation:fade .2s}
+  section.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  h2 .ic{color:var(--gold-deep)}
+  .sub{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:center}
+  .kpi .ic{width:42px;height:42px;border-radius:10px;background:#fbf6ea;color:var(--gold-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .kpi .v{font-size:23px;font-weight:700;line-height:1.1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .kpi .s{font-size:11px;color:var(--slate);margin-top:1px}
+  .kpi.alert .v{color:var(--red)} .kpi.warn .v{color:var(--orange)}
+  /* 卡片通用 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  /* 健康度 */
+  .donut-wrap{display:flex;gap:22px;align-items:center}
+  .donut{width:170px;height:170px;border-radius:50%;flex-shrink:0;position:relative}
+  .donut::after{content:"";position:absolute;inset:26px;background:var(--card);border-radius:50%}
+  .donut .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+  .donut .ctr b{font-size:26px} .donut .ctr span{font-size:11px;color:var(--muted)}
+  .legend{flex:1;display:flex;flex-direction:column;gap:8px}
+  .legend .row{display:flex;align-items:center;gap:8px;font-size:13px}
+  .dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+  .legend .row .nm{flex:1} .legend .row .ct{font-weight:600} .legend .row .vl{color:var(--muted);font-size:12px;min-width:80px;text-align:right}
+  /* 表 */
+  .toolbar{display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fcfbf9}
+  .search .ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line2);white-space:nowrap}
+  th{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;user-select:none}
+  th:hover{color:var(--gold-deep)}
+  tbody tr:hover{background:#fbfaf7}
+  td.name{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;color:#fff}
+  .num{font-variant-numeric:tabular-nums;text-align:right}
+  .neg{color:var(--red)}
+  /* 到货 timeline */
+  .tl{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+  .tl .day{flex:0 0 150px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .tl .day .dt{font-weight:700;font-size:13px} .tl .day .qt{font-size:20px;font-weight:700;color:var(--gold-deep);margin:4px 0}
+  .tl .day .sk{font-size:11px;color:var(--muted);line-height:1.5}
+  /* modal (纯CSS checkbox) */
+  .modal-toggle{display:none}
+  .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(40,38,33,.45);padding:20px}
+  .modal-toggle:checked + .modal{display:flex}
+  .modal .box{background:var(--card);border-radius:14px;max-width:620px;width:100%;max-height:84vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal .head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card)}
+  .modal .head b{font-size:15px;flex:1} .modal .x{cursor:pointer;color:var(--muted);font-size:22px;line-height:1}
+  .modal .body{padding:18px 20px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;font-size:13px}
+  .kv .k{color:var(--muted)} .kv .vv{font-weight:600}
+  .settings p{font-size:13px;color:var(--ink);margin-bottom:10px;line-height:1.7}
+  .settings code{background:#fbf6ea;color:var(--gold-deep);padding:1px 6px;border-radius:4px;font-size:12px}
+  .footer{text-align:center;color:var(--slate);font-size:11px;padding:24px}
+  .empty{text-align:center;color:var(--muted);padding:30px}
+  .badge{font-size:11px;background:#f2efe9;color:var(--muted);padding:2px 8px;border-radius:6px;margin-left:6px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+  /* 分类筛选器 */
+  .cat-filter{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:14px 16px;background:#fcfbf9;border:1px solid var(--line2);border-radius:10px}
+  .cat-filter .filter-item label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:500}
+  .cat-filter .filter-item.filter-search{flex:1;min-width:220px}
+  .cat-filter .filter-meta{padding-bottom:6px}
+  .cat-filter select{
+    appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:8px 32px 8px 12px;font-size:13px;color:var(--ink);
+    cursor:pointer;min-width:140px;line-height:1.4;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a857c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:12px;transition:.15s;
+  }
+  .cat-filter select:hover{border-color:var(--gold)}
+  .cat-filter select:focus{outline:none;border-color:var(--gold-deep);box-shadow:0 0 0 3px rgba(201,169,98,.12)}
+  .cat-filter .search{margin:0}
+</style>
+</head>
+<body>
+<!--__EMBED_DATA__-->
+<div id="jsError"></div>
+
+<header>
+  <div class="brand"><span class="mark">I</span> ITO 库存看板 <span class="ver" id="ver">v0.9</span></div>
+  <div class="spacer"></div>
+  <div class="meta" id="meta">数据加载中…</div>
+  <button class="btn" id="srcBtn" title="切换数据源">数据源：快照</button>
+  <button class="btn gold" id="refreshBtn"><span id="ric">↻</span> 刷新</button>
+  <label class="btn" for="setToggle">⚙ 设置</label>
+</header>
+
+<nav id="nav">
+  <button data-tab="overview" class="active">总览</button>
+  <button data-tab="health">库存健康度</button>
+  <button data-tab="alert">缺货 &amp; 预警</button>
+  <button data-tab="slow">滞销清单</button>
+  <button data-tab="arrival">到货监控</button>
+  <button data-tab="cat">分类维度</button>
+  <button data-tab="catalog">商品总览</button>
+  <button data-tab="accessory">配件赠品</button>
+</nav>
+
+<main>
+  <!-- 总览 -->
+  <section id="overview" class="active">
+    <h2><span class="ic">▦</span>当日库存总览 <span class="sub" id="ovSub"></span></h2>
+    <div class="kpis" id="kpiBox"></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h2 style="font-size:14px">健康度分布</h2><div id="donutMini"></div></div>
+      <div class="card"><h2 style="font-size:14px">分类货值概览</h2><div id="catMini"></div></div>
+    </div>
+  </section>
+
+  <!-- 健康度 -->
+  <section id="health">
+    <h2><span class="ic">◑</span>库存健康度分布 <span class="sub">按 SKU 数量与零售货值</span></h2>
+    <div class="card"><div class="donut-wrap" id="donutBig"></div></div>
+  </section>
+
+  <!-- 缺货预警 -->
+  <section id="alert">
+    <h2><span class="ic">⚠</span>缺货 &amp; 预警清单 <span class="sub" id="alertSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>状态</label>
+          <select id="alertLevel"><option value="__all__">全部</option>
+            <option value="缺货">缺货</option>
+            <option value="急需关注">急需关注</option>
+            <option value="缺货风险">缺货风险</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>分类</label>
+          <select id="alertCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="alertSearch" placeholder="商品名称 / 编码"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="alertCount"></span></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table id="alertTable"><thead><tr>
+        <th data-k="level">状态</th><th data-k="cat">分类</th><th data-k="name">商品名称</th>
+        <th data-k="kf" class="num">可发</th><th data-k="turnover" class="num">周转(天)</th>
+        <th data-k="sellout">预计售罄</th><th data-k="in_transit" class="num">在途</th>
+        <th data-k="arrival_qty" class="num">未来到货</th><th data-k="arrival_eta">到货日期</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 滞销 -->
+  <section id="slow">
+    <h2><span class="ic">⏳</span>滞销清单 <span class="sub" id="slowSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>状态</label>
+          <select id="slowLevel"><option value="__all__">全部</option>
+            <option value="滞销">滞销</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>分类</label>
+          <select id="slowCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>系列</label>
+          <select id="slowSeries"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="slowSearch" placeholder="商品名称 / 编码"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="slowCount"></span></div>
+      </div>
+      <div class="kpis" id="slowKpiBox" style="margin-bottom:14px">
+        <div class="kpi"><div class="ic">▤</div><div><div class="v" id="slowKpiN">-</div><div class="l">滞销 SKU 数</div></div></div>
+        <div class="kpi"><div class="ic">▦</div><div><div class="v" id="slowKpiKf">-</div><div class="l">总可发库存</div></div></div>
+        <div class="kpi"><div class="ic">¥</div><div><div class="v" id="slowKpiValue">-</div><div class="l">总货值(零售)</div></div></div>
+      </div>
+      <div style="overflow-x:auto"><table id="slowTable"><thead><tr>
+        <th data-k="name">商品名称</th><th data-k="cat">分类</th><th data-k="series">系列</th>
+        <th data-k="kf" class="num">可发</th>
+        <th data-k="turnover" class="num">周转(天)</th><th data-k="stock" class="num">总库存</th>
+        <th data-k="value" class="num">货值(零售)</th><th data-k="month" class="num">月销</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 到货 -->
+  <section id="arrival">
+    <h2><span class="ic">🚚</span>到货时间监控 <span class="sub" id="arrSub"></span></h2>
+    <div class="kpis" style="margin-bottom:16px">
+      <div class="kpi"><div class="ic">📅</div><div><div class="v" id="arrWeek">-</div><div class="l">未来一周到货量</div></div></div>
+      <div class="kpi"><div class="ic">🚚</div><div><div class="v" id="arrSku">-</div><div class="l">有到货计划的SKU</div></div></div>
+      <div class="kpi"><div class="ic">⛑</div><div><div class="v" id="arrRelief">-</div><div class="l">到货可缓解的缺货/预警</div></div></div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:14px">未来到货日历</h2>
+      <div class="tl" id="arrivalTl"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2 style="font-size:14px">到货明细（按预计到货日）</h2>
+      <div style="overflow-x:auto"><table id="arrTable"><thead><tr>
+        <th data-k="name">商品名称</th><th data-k="cat">分类</th><th data-k="kf" class="num">当前可发</th>
+        <th data-k="arrival_qty" class="num">预计到货量</th><th data-k="arrival_eta">预计到货日</th>
+        <th data-k="level">当前状态</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 分类 -->
+  <section id="cat">
+    <h2><span class="ic">▤</span>分类维度分析 <span class="sub" id="catSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>品类</label>
+          <select id="catFilter"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>系列</label>
+          <select id="seriesFilter"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>状态</label>
+          <select id="catStatus"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="catSearch" placeholder="商品名称 / 编码"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="catCount"></span></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table id="catTable"><thead><tr>
+        <th data-k="name">商品名称</th><th data-k="cat">分类</th>
+        <th data-k="series">系列</th><th data-k="color">颜色</th><th data-k="size">尺寸</th>
+        <th data-k="kf" class="num">可发</th><th data-k="turnover" class="num">周转(天)</th>
+        <th data-k="level">状态</th><th data-k="value" class="num">货值(零售)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 商品 SKU 总览 -->
+  <section id="catalog">
+    <h2><span class="ic">▤</span>商品 SKU 总览 <span class="sub" id="catalogSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>品类</label>
+          <select id="catalogCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>系列</label>
+          <select id="catalogSeries"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="catalogSearch" placeholder="商品名称 / 编码 / 货品编号"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="catalogCount"></span></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table id="catalogTable"><thead><tr>
+        <th data-k="code">商品编码</th><th data-k="sku">货品编号</th>
+        <th data-k="name">商品名称</th><th data-k="short">货品简称</th>
+        <th data-k="cat">分类</th><th data-k="series">系列</th>
+        <th data-k="price" class="num">零售价</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- 旅行配件 & 赠品 -->
+  <section id="accessory">
+    <h2><span class="ic">▤</span>旅行配件 &amp; 赠品总览 <span class="sub" id="accSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>品类</label>
+          <select id="accCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="accSearch" placeholder="商品名称 / 编码"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="accCount"></span></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table id="accTable"><thead><tr>
+        <th data-k="cat">分类</th><th data-k="code">商品编码</th>
+        <th data-k="name">商品名称</th><th data-k="short">货品简称</th>
+        <th data-k="price" class="num">零售价</th>
+        <th data-k="kf" class="num">可发</th><th data-k="stock" class="num">库存</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<div class="footer">ITO 库存看板 · 数据源 <code>ERP库存概况-每日.xlsx</code> · 看板仅读取不修改 · 数据准确 &gt; 省时</div>
+
+<!-- 详情 modal (纯CSS) -->
+<input type="checkbox" id="detailToggle" class="modal-toggle">
+<div class="modal"><div class="box">
+  <div class="head"><b id="dTitle">商品详情</b><label class="x" for="detailToggle">×</label></div>
+  <div class="body" id="dBody"></div>
+</div></div>
+
+<!-- 设置 modal (纯CSS) -->
+<input type="checkbox" id="setToggle" class="modal-toggle">
+<div class="modal"><div class="box">
+  <div class="head"><b>设置 / 数据说明</b><label class="x" for="setToggle">×</label></div>
+  <div class="body settings" id="setBody"></div>
+</div></div>
+
+<script>
+/* ===== 全局错误条 ===== */
+window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.style.display='block';b.textContent='⚠ JS错误: '+m+' @'+(l||'');};
+(function(){
+  var LIVE=new URLSearchParams(location.search).get('live')==='1';
+  var DATA_URL=LIVE?'/api/data':'inventory_data.json';
+  var CFG={}, DATA=null;
+  var EMBEDDED=window.__DATA__||null; /* 自包含模式：数据内嵌，双击直接打开 */
+
+  /* 图标（Lucide 风格内联） */
+  function ic(n){var p={
+    box:'<path d="M21 8v13H3V8"/><path d="M1 3h15v5H1z"/><path d="M10 12h11v5H10z"/>',
+    alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L10.29 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    truck:'<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    down:'<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>',
+    layers:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+    store:'<path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/>'
+  };return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(p[n]||'')+'</svg>';}
+
+  function fmt(n){if(n==null)return '-';if(Math.abs(n)>=10000)return (n/10000).toFixed(1)+'万';return Math.round(n).toLocaleString('zh-CN');}
+  function money(n){if(n==null)return '-';return '¥'+Math.round(n).toLocaleString('zh-CN');}
+  function levelColor(l){return (CFG.level_color&&CFG.level_color[l])||'#999';}
+  function pill(l){return '<span class="pill" style="background:'+levelColor(l)+'">'+l+'</span>';}
+
+  /* ===== 加载 ===== */
+  function load(){
+    if(EMBEDDED){ /* 自包含：直接渲染内嵌数据 */
+      DATA=EMBEDDED;CFG=DATA.config||{};render();document.getElementById('ric').textContent='↻';return;
+    }
+    document.getElementById('ric').textContent='…';
+    fetch(DATA_URL+'?t='+Date.now()).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){DATA=d;CFG=d.config||{};render();document.getElementById('ric').textContent='↻';})
+    .catch(function(e){
+      var b=document.getElementById('jsError');b.style.display='block';
+      b.textContent='⚠ 数据加载失败: '+e.message+(LIVE?'（实时模式需先运行 python build_inventory.py --serve）':'（请确认 inventory_data.json 已生成）');
+      document.getElementById('ric').textContent='↻';
+    });
+  }
+
+  /* ===== 渲染 ===== */
+  function render(){
+    document.getElementById('ver').textContent='v'+(DATA.version||'0.9');
+    var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
+    document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
+    var srcBtn=document.getElementById('srcBtn');
+    if(EMBEDDED){srcBtn.textContent='数据源：内置快照';srcBtn.disabled=true;srcBtn.style.opacity=.55;}
+    else srcBtn.textContent='数据源：'+(LIVE?'实时':'快照');
+    renderKPI();renderDonutMini();renderCatMini();renderHealth();
+    renderAlert();renderSlow();renderArrival();renderCat();renderCatalog();renderAccessory();renderSettings();
+    document.getElementById('ovSub').textContent='在售 '+DATA.kpi.on_sale_sku+' SKU（含定制 '+DATA.kpi.custom_sku+'）';
+  }
+
+  function renderKPI(){
+    var k=DATA.kpi;
+    var cards=[
+      {ic:'box',v:k.on_sale_sku,l:'在售 SKU',s:'含定制 '+k.custom_sku},
+      {ic:'layers',v:fmt(k.total_kf),l:'总可发库存',s:'件'},
+      {ic:'store',v:money(k.total_value),l:'库存货值(零售)',s:'可发×零售价'},
+      {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'备货类可发=0',cls:'alert'},
+      {ic:'alert',v:k.warning,l:'预警 SKU',s:'急需+风险',cls:'warn'},
+      {ic:'truck',v:fmt(k.in_transit),l:'在途总量',s:'采+产+调拨'},
+      {ic:'truck',v:fmt(k.arrival_week),l:'未来一周到货',s:'提货计划'},
+      {ic:'box',v:k.custom_sku,l:'定制(按需)SKU',s:'可发=0 属正常'}
+    ];
+    document.getElementById('kpiBox').innerHTML=cards.map(function(c){
+      return '<div class="kpi '+(c.cls||'')+'"><div class="ic">'+ic(c.ic)+'</div><div><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div><div class="s">'+c.s+'</div></div></div>';
+    }).join('');
+  }
+
+  function donut(seg){ // seg: [{label,count,color}]
+    var total=seg.reduce(function(a,b){return a+b.count;},0)||1;
+    var acc=0,stops=[];
+    seg.forEach(function(s){var a0=acc/total*360, a1=(acc+s.count)/total*360;acc+=s.count;stops.push(s.color+' '+a0+'deg '+a1+'deg');});
+    return 'conic-gradient('+stops.join(',')+')';
+  }
+
+  function renderDonutMini(){
+    var h=DATA.health,order=CFG.level_order||[];
+    var seg=order.map(function(l){return {label:l,count:h[l].count,color:levelColor(l)};});
+    var html='<div class="donut-wrap"><div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+DATA.kpi.on_sale_sku+'</b><span>在售SKU</span></div></div><div class="legend">';
+    seg.forEach(function(s){html+='<div class="row"><span class="dot" style="background:'+s.color+'"></span><span class="nm">'+s.label+'</span><span class="ct">'+s.count+'</span><span class="vl">'+money(h[s.label].value)+'</span></div>';});
+    html+='</div></div>';
+    document.getElementById('donutMini').innerHTML=html;
+  }
+
+  function renderHealth(){
+    var h=DATA.health,order=CFG.level_order||[];
+    var seg=order.map(function(l){return {label:l,count:h[l].count,color:levelColor(l)};});
+    var html='<div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+DATA.kpi.on_sale_sku+'</b><span>在售SKU</span></div></div>';
+    html+='<div class="legend">';
+    seg.forEach(function(s){
+      var pct=DATA.kpi.on_sale_sku?(s.count/DATA.kpi.on_sale_sku*100).toFixed(1):0;
+      html+='<div class="row"><span class="dot" style="background:'+s.color+'"></span><span class="nm">'+s.label+'</span><span class="ct">'+s.count+' 个</span><span class="vl">'+pct+'% · '+money(h[s.label].value)+'</span></div>';
+    });
+    html+='</div>';
+    document.getElementById('donutBig').innerHTML=html;
+  }
+
+  function renderCatMini(){
+    var c=DATA.categories;
+    var rows=Object.keys(c).sort(function(a,b){return c[b].value-c[a].value;});
+    var html='<table style="font-size:13px"><tbody>';
+    rows.forEach(function(k){var v=c[k];html+='<tr><td style="padding:6px 8px">'+k+'</td><td class="num" style="padding:6px 8px;font-weight:600">'+money(v.value)+'</td><td style="padding:6px 8px;color:var(--muted)">'+v.sku+' SKU</td></tr>';});
+    html+='</tbody></table>';
+    document.getElementById('catMini').innerHTML=html;
+  }
+
+  /* 通用表格构建 + 搜索 + 排序 */
+  function buildTable(tableId,rows,cols,sortDefault){
+    var tb=document.getElementById(tableId);var tbody=tb.querySelector('tbody');
+    tbody._rows=rows;tbody._cols=cols;tbody._sort=sortDefault||cols[0].k;tbody._asc=true;
+    paint(tb);
+  }
+  function paint(tb){
+    var tbody=tb.querySelector('tbody');var cols=tbody._cols;var rows=tbody._rows.slice();
+    var k=tbody._sort,a=tbody._asc?1:-1;
+    rows.sort(function(x,y){var v1=x[k],v2=y[k];if(v1==null)v1=-1e9;if(v2==null)v2=-1e9;if(typeof v1==='string')return v1.localeCompare(v2,'zh')*a;return (v1-v2)*a;});
+    tbody.innerHTML=rows.map(function(r){var click=r._click?' onclick="openDetail(\''+r._id+'\')" style="cursor:pointer"':'';return '<tr'+click+'>'+cols.map(function(c){return '<td class="'+(c.cls||'')+'">'+(c.f?c.f(r):(r[c.k]!=null?r[c.k]:'-'))+'</td>';}).join('')+'</tr>';}).join('');
+    // 排序表头
+    tb.querySelectorAll('th').forEach(function(th){var key=th.getAttribute('data-k');if(key)th.onclick=function(){if(tbody._sort===key)tbody._asc=!tbody._asc;else{tbody._sort=key;tbody._asc=true;}paint(tb);};});
+  }
+  function bindSearch(inputId,tableId){
+    document.getElementById(inputId).addEventListener('input',function(){
+      var q=this.value.trim().toLowerCase();var tb=document.getElementById(tableId);var all=tb.querySelector('tbody')._all||[];
+      tb.querySelector('tbody')._rows=all.filter(function(r){return !q||(r.name&&r.name.toLowerCase().indexOf(q)>=0)||(r.code&&String(r.code).toLowerCase().indexOf(q)>=0);});
+      paint(tb);updateCount(tableId);
+    });
+  }
+  function updateCount(tableId){var tb=document.getElementById(tableId);var n=(tb.querySelector('tbody')._rows||[]).length;var badge=tb.id.replace('Table','Count');var el=document.getElementById(badge);if(el)el.textContent=n+' 条';}
+
+  function renderAlert(){
+    var baseRows=DATA.skus.filter(function(s){return ['缺货','急需关注','缺货风险'].indexOf(s.level)>=0;});
+    var cats=Array.from(new Set(baseRows.map(function(s){return s.cat;}))).sort();
+    var selCat=document.getElementById('alertCat');
+    selCat.innerHTML='<option value="__all__">全部</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    function render(){
+      var lv=document.getElementById('alertLevel').value;
+      var ct=selCat.value;
+      var q=(document.getElementById('alertSearch').value||'').trim().toLowerCase();
+      var rows=baseRows.filter(function(s){
+        if(lv!=='__all__' && s.level!==lv) return false;
+        if(ct!=='__all__' && s.cat!==ct) return false;
+        if(q && !((s.name||'').toLowerCase().indexOf(q)>=0) && !((''+s.code).toLowerCase().indexOf(q)>=0)) return false;
+        return true;
+      });
+      rows.forEach(function(r){r._id=r.code;r._click=true;});
+      var cols=[
+        {k:'level',f:function(r){return pill(r.level);}},
+        {k:'cat'},{k:'name',cls:'name'},
+        {k:'kf',cls:'num',f:function(r){return r.kf;}},
+        {k:'turnover',cls:'num',f:function(r){return r.turnover==null?'-':r.turnover;}},
+        {k:'sellout',f:function(r){return r.sellout||'-';}},
+        {k:'in_transit',cls:'num'},{k:'arrival_qty',cls:'num'},
+        {k:'arrival_eta',f:function(r){return r.arrival_eta||'-';}}
+      ];
+      var tb=document.getElementById('alertTable');tb.querySelector('tbody')._all=rows;
+      buildTable('alertTable',rows,cols,'kf');
+      document.getElementById('alertCount').textContent=rows.length+' 条';
+      var tag=[];
+      if(lv!=='__all__') tag.push('状态·'+lv);
+      if(ct!=='__all__') tag.push(ct);
+      document.getElementById('alertSub').textContent=tag.length?'当前：'+tag.join(' / '):'缺货'+DATA.kpi.out_of_stock+' · 预警'+DATA.kpi.warning+'（全部）';
+    }
+    document.getElementById('alertLevel').onchange=render;
+    selCat.onchange=render;
+    document.getElementById('alertSearch').oninput=render;
+    render();
+  }
+
+  function renderSlow(){
+    var baseRows=DATA.skus.filter(function(s){return s.level==='滞销';});
+    var cats=Array.from(new Set(baseRows.map(function(s){return s.cat;}))).sort();
+    var seriesToCats={};
+    baseRows.forEach(function(s){if(s.series){(seriesToCats[s.series]=seriesToCats[s.series]||new Set()).add(s.cat);}});
+    var selCat=document.getElementById('slowCat');
+    var selSer=document.getElementById('slowSeries');
+    selCat.innerHTML='<option value="__all__">全部</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    function updateSeries(){
+      var c=selCat.value;
+      var list=c==='__all__'?Object.keys(seriesToCats).sort():Object.keys(seriesToCats).filter(function(s){return seriesToCats[s].has(c);}).sort();
+      var prev=selSer.value;
+      selSer.innerHTML='<option value="__all__">全部</option>'+list.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+      if(list.indexOf(prev)>=0) selSer.value=prev; else selSer.value='__all__';
+    }
+    function render(){
+      var lv=document.getElementById('slowLevel').value;
+      var ct=selCat.value, sr=selSer.value;
+      var q=(document.getElementById('slowSearch').value||'').trim().toLowerCase();
+      var rows=baseRows.filter(function(s){
+        if(lv!=='__all__' && s.level!==lv) return false;
+        if(ct!=='__all__' && s.cat!==ct) return false;
+        if(sr!=='__all__' && s.series!==sr) return false;
+        if(q && !((s.name||'').toLowerCase().indexOf(q)>=0) && !((''+s.code).toLowerCase().indexOf(q)>=0)) return false;
+        return true;
+      });
+      rows.forEach(function(r){r._id=r.code;r._click=true;});
+      var cols=[
+        {k:'name',cls:'name'},{k:'cat'},{k:'series'},
+        {k:'kf',cls:'num'},
+        {k:'turnover',cls:'num',f:function(r){return r.turnover==null?'>999':r.turnover;}},
+        {k:'stock',cls:'num'},{k:'value',cls:'num',f:function(r){return money(r.value);}},
+        {k:'month',cls:'num'}
+      ];
+      var tb=document.getElementById('slowTable');tb.querySelector('tbody')._all=rows;
+      buildTable('slowTable',rows,cols,'turnover');
+      document.getElementById('slowCount').textContent=rows.length+' 个 SKU';
+      // 货值汇总 KPI（按当前筛选实时更新）
+      var totalKf=rows.reduce(function(a,r){return a+(r.kf||0);},0);
+      var totalValue=rows.reduce(function(a,r){return a+(r.value||0);},0);
+      document.getElementById('slowKpiN').textContent=rows.length;
+      document.getElementById('slowKpiKf').textContent=fmt(totalKf);
+      document.getElementById('slowKpiValue').textContent=money(totalValue);
+      var tag=[];
+      if(lv!=='__all__') tag.push('状态·'+lv);
+      if(ct!=='__all__') tag.push(ct);
+      if(sr!=='__all__') tag.push('系列·'+sr);
+      document.getElementById('slowSub').textContent=tag.length?'当前：'+tag.join(' / '):'周转>'+CFG.overstock_days+'天 或 长期无销';
+    }
+    selCat.onchange=function(){updateSeries();render();};
+    selSer.onchange=render;
+    document.getElementById('slowLevel').onchange=render;
+    document.getElementById('slowSearch').oninput=render;
+    updateSeries();render();
+  }
+
+  function renderArrival(){
+    var tl=DATA.arrival_timeline||[];
+    var hasPlan=DATA.has_arrival_plan!==false && tl.length>0;
+    var html='';
+    if(!tl.length)html='<div class="empty">'+ (DATA.has_arrival_plan===false?'当前文件未含「供应链提货计划表」，暂无按日期到货计划。<br>（在途量见总览 KPI；若每日导出文件已包含该表，刷新后自动恢复日历）':'暂无未来到货计划') +'</div>';
+    tl.forEach(function(d){var sk=(d.skus||[]).map(function(s){return s.name.replace('ITO ','')+' ×'+s.qty;}).join('<br>');
+      html+='<div class="day"><div class="dt">'+d.date+'</div><div class="qt">'+fmt(d.qty)+'</div><div class="sk">'+sk+'</div></div>';});
+    document.getElementById('arrivalTl').innerHTML=html;
+    document.getElementById('arrWeek').textContent=hasPlan?fmt(DATA.kpi.arrival_week):'—';
+    var arr=DATA.skus.filter(function(s){return s.arrival_qty>0;});
+    document.getElementById('arrSku').textContent=hasPlan?arr.length:'—';
+    var relief=arr.filter(function(s){return ['缺货','急需关注','缺货风险'].indexOf(s.level)>=0;}).length;
+    document.getElementById('arrRelief').textContent=hasPlan?relief:'—';
+    document.getElementById('arrSub').textContent=hasPlan?('提货计划表覆盖 '+arr.length+' 个SKU'):'未检测到提货计划表 · 无按日期到货日历（在途量见总览）';
+    // 明细表
+    rows=arr.slice().sort(function(a,b){return (a.arrival_eta||'9').localeCompare(b.arrival_eta||'9');});
+    rows.forEach(function(r){r._id=r.code;r._click=true;});
+    var cols=[
+      {k:'name',cls:'name'},{k:'cat'},{k:'kf',cls:'num'},
+      {k:'arrival_qty',cls:'num'},{k:'arrival_eta',f:function(r){return r.arrival_eta||'-';}},
+      {k:'level',f:function(r){return pill(r.level);}}
+    ];
+    var tb=document.getElementById('arrTable');tb.querySelector('tbody')._all=rows;
+    buildTable('arrTable',rows,cols,'arrival_eta');updateCount('arrTable');
+  }
+
+  function renderCat(){
+    var skus=DATA.skus;
+    /* 状态可选值：常规 5 级 + 定制 */
+    var statusOptions=['缺货','急需关注','缺货风险','安全','滞销'];
+    var hasCustom=skus.some(function(s){return s.level==='定制';});
+    if(hasCustom) statusOptions.push('定制');
+    makeFilterTable(skus,{
+      catId:'catFilter',seriesId:'seriesFilter',statusId:'catStatus',
+      searchId:'catSearch',
+      tableId:'catTable',countId:'catCount',subId:'catSub',
+      sortBy:'kf',
+      statusOptions:statusOptions,
+      defaultSub:'按品类/系列/状态筛选查看每个 SKU 明细',
+      cols:[
+        {k:'name',cls:'name'},{k:'cat'},{k:'series'},{k:'color'},{k:'size'},
+        {k:'kf',cls:'num'},
+        {k:'turnover',cls:'num',f:function(r){return r.turnover==null?'-':r.turnover;}},
+        {k:'level',f:function(r){return pill(r.level);}},
+        {k:'value',cls:'num',f:function(r){return money(r.value);}}
+      ]
+    });
+  }
+
+  /* 通用：品类+系列联动 + 搜索 + 表格（给 商品总览 / 配件赠品 用） */
+  function makeFilterTable(baseRows, opts){
+    var cats=Array.from(new Set(baseRows.map(function(s){return s.cat;}))).sort();
+    var seriesToCats={};
+    baseRows.forEach(function(s){if(s.series){(seriesToCats[s.series]=seriesToCats[s.series]||new Set()).add(s.cat);}});
+    var selCat=document.getElementById(opts.catId);
+    var selSer=opts.seriesId?document.getElementById(opts.seriesId):null;
+    var selStatus=opts.statusId?document.getElementById(opts.statusId):null;
+    selCat.innerHTML='<option value="__all__">全部</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    if(selStatus && opts.statusOptions){
+      selStatus.innerHTML='<option value="__all__">全部</option>'+opts.statusOptions.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+    }
+    function updateSeries(){
+      if(!selSer) return;
+      var c=selCat.value;
+      var list=c==='__all__'?Object.keys(seriesToCats).sort():Object.keys(seriesToCats).filter(function(s){return seriesToCats[s].has(c);}).sort();
+      var prev=selSer.value;
+      selSer.innerHTML='<option value="__all__">全部</option>'+list.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+      if(list.indexOf(prev)>=0) selSer.value=prev; else selSer.value='__all__';
+    }
+    function renderTable(){
+      var cat=selCat.value, ser=selSer?selSer.value:'__all__', status=selStatus?selStatus.value:'__all__';
+      var q=(document.getElementById(opts.searchId).value||'').trim().toLowerCase();
+      var rows=baseRows.filter(function(s){
+        if(cat!=='__all__' && s.cat!==cat) return false;
+        if(ser!=='__all__' && s.series!==ser) return false;
+        if(status!=='__all__' && s.level!==status) return false;
+        if(q && !((s.name||'').toLowerCase().indexOf(q)>=0)
+             && !((''+s.code).toLowerCase().indexOf(q)>=0)
+             && !((''+s.sku||'').toLowerCase().indexOf(q)>=0)) return false;
+        return true;
+      });
+      rows.forEach(function(r){r._id=r.code;r._click=true;});
+      var tb=document.getElementById(opts.tableId);tb.querySelector('tbody')._all=rows;
+      buildTable(opts.tableId,rows,opts.cols,opts.sortBy||opts.cols[0].k);
+      var el=document.getElementById(opts.countId);
+      if(el) el.textContent=rows.length+' 条';
+      var tag=[];
+      if(cat!=='__all__') tag.push(cat);
+      if(ser!=='__all__') tag.push('系列·'+ser);
+      if(status!=='__all__') tag.push('状态·'+status);
+      var sub=document.getElementById(opts.subId);
+      if(sub) sub.textContent=tag.length?'当前：'+tag.join(' / '):(opts.defaultSub||'');
+      if(opts.summary) opts.summary(rows);
+    }
+    selCat.onchange=function(){updateSeries();renderTable();};
+    if(selSer) selSer.onchange=renderTable;
+    if(selStatus) selStatus.onchange=renderTable;
+    document.getElementById(opts.searchId).oninput=renderTable;
+    updateSeries();renderTable();
+  }
+
+  function renderCatalog(){
+    var rows=DATA.catalog||[];
+    makeFilterTable(rows,{
+      catId:'catalogCat',seriesId:'catalogSeries',searchId:'catalogSearch',
+      tableId:'catalogTable',countId:'catalogCount',subId:'catalogSub',
+      sortBy:'code',
+      defaultSub:'全量正品目录（含停采），按『匹配表（勿删）』口径设计',
+      cols:[
+        {k:'code'},{k:'sku'},
+        {k:'name',cls:'name'},{k:'short'},{k:'cat'},{k:'series'},
+        {k:'price',cls:'num',f:function(r){return r.price>0?money(r.price):'-';}}
+      ]
+    });
+  }
+
+  function renderAccessory(){
+    var rows=DATA.accessories||[];
+    makeFilterTable(rows,{
+      catId:'accCat',searchId:'accSearch',
+      tableId:'accTable',countId:'accCount',subId:'accSub',
+      sortBy:'cat',
+      defaultSub:'旅行箱配件 + 赠品（含停采）',
+      cols:[
+        {k:'cat'},{k:'code'},
+        {k:'name',cls:'name'},{k:'short'},
+        {k:'price',cls:'num',f:function(r){return r.price>0?money(r.price):'-';}},
+        {k:'kf',cls:'num'},{k:'stock',cls:'num'}
+      ]
+    });
+  }
+
+  function renderSettings(){
+    var c=CFG;var html='<p><b>数据源</b>：当前为 <b>'+(EMBEDDED?'内置快照（自包含，双击即开）':(LIVE?'实时模式':'外部快照'))+'</b>。'+'</p>';
+    html+='<p><b>自包含成品</b>：<code>ITO库存看板.html</code> 已把数据内嵌进文件，直接双击用浏览器打开即可查看，无需服务器、无需任何额外操作。</p>';
+    html+='<p><b>数据刷新</b>：Excel 更新后，运行 <code>python build_inventory.py</code>，会自动重新生成 <code>ITO库存看板.html</code> 与 <code>inventory_data.json</code>，覆盖旧文件即完成刷新。</p>';
+    html+='<p><b>实时模式（可选）</b>：运行 <code>python build_inventory.py --serve</code>，访问 <code>?live=1</code>，页面打开即实时读 Excel 计算（需常驻本地服务）。</p>';
+    html+='<p><b>健康度阈值</b>（周转天数）：急需关注 &lt; '+c.urgent_days+'　缺货风险 &lt; '+c.risk_days+'　安全 ≤ '+c.overstock_days+'　滞销 &gt; '+c.overstock_days+'。可发=0 即缺货（定制类除外）。</p>';
+    html+='<p><b>货值口径</b>：按零售价（数据源固定成本价为 0，不可用）。<b>在售分类</b>：'+((c.on_sale||[]).join('、'))+'。</p>';
+    html+='<p><b>数据铁律</b>：看板仅读取 Excel，绝不回写；无数据不展示；对照源表逐项核对。</p>';
+    document.getElementById('setBody').innerHTML=html;
+  }
+
+  /* 详情 */
+  window.openDetail=function(code){
+    var s=DATA.skus.filter(function(x){return x.code===code;})[0];if(!s)return;
+    document.getElementById('dTitle').textContent=s.name;
+    var rows=[
+      ['商品编码',s.code],['分类',s.cat],['系列',s.series||'-'],['颜色/尺寸',(s.color||'-')+' / '+(s.size||'-')],
+      ['状态',pill(s.level)],['可发库存',s.kf],['总库存',s.stock],['7天销量',s.d7],['月销量',s.month],
+      ['日均销量',s.daily],['周转天数',s.turnover==null?'-':s.turnover],['预计售罄',s.sellout||'-'],
+      ['零售价',money(s.price)],['库存货值(零售)',money(s.value)],
+      ['采购在途',s.purchase],['生产在途',s.produce],['调拨在途',s.transfer],['在途合计',s.in_transit],
+      ['未来到货量',s.arrival_qty],['预计到货日',s.arrival_eta||'-']
+    ];
+    document.getElementById('dBody').innerHTML='<div class="kv">'+rows.map(function(r){return '<div class="k">'+r[0]+'</div><div class="vv">'+r[1]+'</div>';}).join('')+'</div>';
+    document.getElementById('detailToggle').checked=true;
+  };
+
+  /* 导航 */
+  document.querySelectorAll('#nav button').forEach(function(b){b.onclick=function(){
+    document.querySelectorAll('#nav button').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('main section').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active');
+  };});
+
+  document.getElementById('refreshBtn').onclick=load;
+  document.getElementById('srcBtn').onclick=function(){
+    var u=new URL(location.href);if(LIVE)u.searchParams.delete('live');else u.searchParams.set('live','1');location.href=u.toString();
+  };
+
+  load();
+})();
+</script>
+</body>
+</html>
