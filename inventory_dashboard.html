@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ITO 库存看板 v0.9</title>
+<title>ITO 库存看板 v0.11</title>
 <style>
   :root{
     --gold:#c9a962; --gold-soft:#e8dcc0; --gold-deep:#a8884a;
@@ -92,6 +92,14 @@
   .empty{text-align:center;color:var(--muted);padding:30px}
   .badge{font-size:11px;background:#f2efe9;color:var(--muted);padding:2px 8px;border-radius:6px;margin-left:6px}
   @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+  /* 登录门 */
+  #loginGate{position:fixed;inset:0;z-index:200;background:#faf9f6;display:none;align-items:center;justify-content:center;padding:20px}
+  #loginGate .lg-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:38px 42px;width:100%;max-width:360px;text-align:center;box-shadow:0 12px 40px rgba(120,100,60,.10)}
+  #loginGate .lg-logo{width:56px;height:56px;border-radius:14px;background:var(--gold);color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  #loginGate .lg-title{font-size:19px;font-weight:700;letter-spacing:.5px}
+  #loginGate .lg-sub{font-size:12.5px;color:var(--muted);margin:6px 0 20px}
+  #loginGate input{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:#fcfbf9;text-align:center;letter-spacing:2px}
+  #loginGate input:focus{outline:none;border-color:var(--gold-deep);box-shadow:0 0 0 3px rgba(201,169,98,.12)}
   /* 分类筛选器 */
   .cat-filter{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:14px 16px;background:#fcfbf9;border:1px solid var(--line2);border-radius:10px}
   .cat-filter .filter-item label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:500}
@@ -112,10 +120,22 @@
 </head>
 <body>
 <!--__EMBED_DATA__-->
+<!--__PWD_HASH__-->
+<!-- 登录门（build 注入密码哈希后启用） -->
+<div id="loginGate">
+  <div class="lg-card">
+    <div class="lg-logo">I</div>
+    <div class="lg-title">ITO 库存看板</div>
+    <div class="lg-sub">内部系统 · 请输入访问密码</div>
+    <input id="pwdInput" type="password" placeholder="访问密码" autocomplete="off">
+    <button id="pwdBtn" class="btn gold" style="width:100%;justify-content:center;margin-top:12px">登 录</button>
+    <div id="pwdErr" style="display:none;color:var(--red);font-size:12px;margin-top:10px">密码错误，请重试</div>
+  </div>
+</div>
 <div id="jsError"></div>
 
 <header>
-  <div class="brand"><span class="mark">I</span> ITO 库存看板 <span class="ver" id="ver">v0.9</span></div>
+  <div class="brand"><span class="mark">I</span> ITO 库存看板 <span class="ver" id="ver">v0.11</span></div>
   <div class="spacer"></div>
   <div class="meta" id="meta">数据加载中…</div>
   <button class="btn" id="srcBtn" title="切换数据源">数据源：快照</button>
@@ -353,6 +373,51 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   var DATA_URL=LIVE?'/api/data':'inventory_data.json';
   var CFG={}, DATA=null;
   var EMBEDDED=window.__DATA__||null; /* 自包含模式：数据内嵌，双击直接打开 */
+  var PWD_HASH=window.__PWD_HASH__||null; /* 登录门密码哈希（build 注入） */
+
+  /* ===== SHA-256（纯 JS，file:// 可用，无需 crypto.subtle） ===== */
+  function sha256(str){
+    var data=new TextEncoder().encode(str);
+    var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    var l=data.length, bitLen=l*8, mLen=((l+8)>>6<<6)+64;
+    var m=new Uint8Array(mLen); m.set(data); m[l]=0x80;
+    var dv=new DataView(m.buffer);
+    dv.setUint32(mLen-8, Math.floor(bitLen/4294967296), false);
+    dv.setUint32(mLen-4, bitLen>>>0, false);
+    function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+    for(var off=0; off<mLen; off+=64){
+      var w=new Uint32Array(64);
+      for(var i=0;i<16;i++) w[i]=dv.getUint32(off+i*4,false);
+      for(var i=16;i<64;i++){
+        var s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3);
+        var s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);
+        w[i]=(w[i-16]+s0+w[i-7]+s1)|0;
+      }
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=rotr(e,6)^rotr(e,11)^rotr(e,25);
+        var ch=(e&f)^((~e)&g);
+        var t1=(h+S1+ch+K[i]+w[i])|0;
+        var S0=rotr(a,2)^rotr(a,13)^rotr(a,22);
+        var maj=(a&b)^(a&c)^(b&c);
+        var t2=(S0+maj)|0;
+        h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+      }
+      H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;
+      H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;
+    }
+    var out='';
+    for(var i=0;i<8;i++){var v=H[i]>>>0;for(var j=7;j>=0;j--){out+=((v>>(j*4))&15).toString(16);}}
+    return out;
+  }
 
   /* 图标（Lucide 风格内联） */
   function ic(n){var p={
@@ -386,7 +451,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* ===== 渲染 ===== */
   function render(){
-    document.getElementById('ver').textContent='v'+(DATA.version||'0.9');
+    document.getElementById('ver').textContent='v'+(DATA.version||'0.11');
     var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
     document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
     var srcBtn=document.getElementById('srcBtn');
@@ -583,7 +648,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     document.getElementById('arrSku').textContent=hasPlan?arr.length:'—';
     var relief=arr.filter(function(s){return ['缺货','急需关注','缺货风险'].indexOf(s.level)>=0;}).length;
     document.getElementById('arrRelief').textContent=hasPlan?relief:'—';
-    document.getElementById('arrSub').textContent=hasPlan?('提货计划表覆盖 '+arr.length+' 个SKU'):'未检测到提货计划表 · 无按日期到货日历（在途量见总览）';
+    document.getElementById('arrSub').textContent=hasPlan?(DATA.arrival_source||'到货进度')+' · 覆盖 '+arr.length+' 个 SKU':'未检测到到货进度表 · 无按日期到货日历（在途量见总览）';
     // 明细表
     rows=arr.slice().sort(function(a,b){return (a.arrival_eta||'9').localeCompare(b.arrival_eta||'9');});
     rows.forEach(function(r){r._id=r.code;r._click=true;});
@@ -741,7 +806,33 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var u=new URL(location.href);if(LIVE)u.searchParams.delete('live');else u.searchParams.set('live','1');location.href=u.toString();
   };
 
-  load();
+  /* ===== 登录门 ===== */
+  var AUTH_KEY='ito_dash_auth';
+  function enterDash(){
+    document.getElementById('loginGate').style.display='none';
+    load();
+  }
+  function doLogin(){
+    var input=document.getElementById('pwdInput');
+    var err=document.getElementById('pwdErr');
+    if(!PWD_HASH){enterDash();return;}
+    if(sha256(input.value)===PWD_HASH){
+      try{sessionStorage.setItem(AUTH_KEY,'1');}catch(e){}
+      err.style.display='none';
+      enterDash();
+    }else{
+      err.style.display='block';
+      input.value='';input.focus();
+    }
+  }
+  document.getElementById('pwdBtn').onclick=doLogin;
+  document.getElementById('pwdInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  if(PWD_HASH && sessionStorage.getItem(AUTH_KEY)!=='1'){
+    document.getElementById('loginGate').style.display='flex';
+    document.getElementById('pwdInput').focus();
+  }else{
+    enterDash();
+  }
 })();
 </script>
 </body>

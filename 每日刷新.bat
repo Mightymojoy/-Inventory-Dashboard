@@ -51,8 +51,8 @@ if not exist "vercel_token.txt" (
 )
 set /p VTOKEN=<vercel_token.txt
 echo        ÕýÔÚ²¿Êð...
-if exist "node_modules\\bin\\vercel.cmd" (
-    set DEPLOYCMD=call node_modules\\bin\\vercel.cmd
+if exist "node_modules\.binercel.cmd" (
+    set DEPLOYCMD=call node_modules\.binercel.cmd
 ) else (
     set DEPLOYCMD=call npx --yes vercel
 )

@@ -1,7 +1,19 @@
+# 钉钉机器人配置（含 webhook/secret，不入库）
+dingtalk_config.txt
+
+# Vercel 部署 token（不入库）
+vercel_token.txt
+
+# 访问密码（不入库）
+password.txt
+
 # 数据源与构建产物（含业务数据：库存/价格/销量，公开仓库不上传）
 *.xlsx
 *.xls
 ~$*
+
+# 部署目录（含成品，内嵌业务数据）
+deploy/
 
 # 构建产物（内嵌业务数据）
 ITO库存看板.html
@@ -14,6 +26,9 @@ _*.py
 _*.js
 _*.json
 *.log
+
+# Node 依赖（vercel CLI 本地安装）
+node_modules/
 
 # Python
 __pycache__/

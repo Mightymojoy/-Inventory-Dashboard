@@ -20,6 +20,8 @@ import sys
 import re
 import json
 import math
+import shutil
+import hashlib
 import datetime
 
 try:
@@ -31,6 +33,7 @@ except ImportError:
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 XLSX_PATH = os.path.join(OUT_DIR, "库存-每日.xlsx")   # 每日更新表（新格式单 sheet，或含多 sheet 的老格式）
 OUT_JSON = os.path.join(OUT_DIR, "inventory_data.json")
+ARRIVAL_SYNC_XLSX = os.path.join(OUT_DIR, "入库明细同步.xlsx")   # 到货进度表（按日期命名 sheet，取最新）
 
 # 每日刷新使用当日日期
 TODAY = datetime.date.today()
@@ -185,6 +188,84 @@ def find_source_sheet(wb):
     return wb.sheetnames[0]
 
 
+def load_arrival_progress(path=ARRIVAL_SYNC_XLSX):
+    """读取『入库明细同步.xlsx』，取**最新日期命名**的 sheet 的交付计划。
+    返回 {per_sku, timeline, latest_sheet, latest_date}；无文件/无日期 sheet 返回 None。
+    - per_sku: 货品编号 -> {total, by_date:{date:qty}, eta, name}
+    - timeline: 日期str -> {qty, skus:[{name,qty}]}（含当天起的交付计划）
+    兼容两种表头：第一行直接是日期列（新格式），或第一行'交付节奏'+第二行日期列（老格式）。"""
+    if not os.path.exists(path):
+        return None
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True)
+    except Exception as e:
+        print("[warn] 读取入库明细同步失败:", e, file=sys.stderr)
+        return None
+    # 找最新日期 sheet（MMDD 命名，当年）
+    sheet_dates = {}
+    for name in wb.sheetnames:
+        if not name or not re.fullmatch(r"\d{4}", name):
+            continue
+        mm, dd = int(name[:2]), int(name[2:4])
+        try:
+            d = datetime.date(TODAY.year, mm, dd)
+        except ValueError:
+            continue
+        sheet_dates[d] = name
+    if not sheet_dates:
+        print("[warn] 入库明细同步中未找到日期命名 sheet", file=sys.stderr)
+        return None
+    latest = max(sheet_dates)
+    ws = wb[sheet_dates[latest]]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return None
+    # 定位表头行：第一行若非日期交付列，则用第二行
+    hdr_idx = 0
+    if not any(("交付" in str(v)) for v in (rows[0][2:] if len(rows[0]) > 2 else [])):
+        hdr_idx = 1
+    if hdr_idx >= len(rows):
+        return None
+    header = rows[hdr_idx]
+    date_cols = {}
+    for i, v in enumerate(header):
+        s = str(v) if v is not None else ""
+        if "交付" in s:
+            dstr = s.split("\n")[0].strip()
+            if len(dstr) >= 4 and dstr.isdigit():
+                try:
+                    date_cols[i] = datetime.date(TODAY.year, int(dstr[:2]), int(dstr[2:4]))
+                except ValueError:
+                    pass
+    per_sku = {}
+    timeline = {}
+    for r in rows[hdr_idx + 1:]:
+        if not r or r[0] is None:
+            continue
+        sku_no = str(r[0]).strip()
+        if not sku_no:
+            continue
+        name = r[1] if len(r) > 1 else ""
+        for ci, d in date_cols.items():
+            q = num(r[ci]) if ci < len(r) else 0
+            if q <= 0:
+                continue
+            rec = per_sku.setdefault(sku_no, {"total": 0.0, "by_date": {}, "eta": None, "name": name})
+            rec["total"] += q
+            rec["by_date"][d.isoformat()] = rec["by_date"].get(d.isoformat(), 0) + q
+            if rec["eta"] is None or d < rec["eta"]:
+                rec["eta"] = d
+            g = timeline.setdefault(d.isoformat(), {"qty": 0.0, "skus": []})
+            g["qty"] += q
+            g["skus"].append({"name": name, "qty": q})
+    return {
+        "per_sku": per_sku,
+        "timeline": timeline,
+        "latest_sheet": sheet_dates[latest],
+        "latest_date": latest.isoformat(),
+    }
+
+
 def compute(path=XLSX_PATH):
     wb = openpyxl.load_workbook(path, data_only=True)
     has_matching = "匹配表（勿删）" in wb.sheetnames
@@ -281,6 +362,7 @@ def compute(path=XLSX_PATH):
 
         # 颜色/尺寸：有『匹配表（勿删）』优先用匹配表；无匹配表（新格式单 sheet）直接用数据源 颜色/尺寸 列
         code_str = str(r[f_code]).strip() if f_code is not None and r[f_code] is not None else ""
+        sku_no = str(r[f_sku]).strip() if f_sku is not None and r[f_sku] is not None else ""
         mt = matching.get(code_str, None)
         mt_has = bool(mt and (mt["color"] or mt["size"]))
         if mt_has:
@@ -300,6 +382,7 @@ def compute(path=XLSX_PATH):
 
         skus.append({
             "code": code_str,
+            "sku": sku_no,
             "barcode": str(barcode) if barcode is not None else "",
             "name": name or "",
             "cat": cat or "",
@@ -363,16 +446,32 @@ def compute(path=XLSX_PATH):
             item["status"] = "停采" if str(cat).startswith("停采") else ""
             accessories.append(item)
 
-    # ===== 2. 供应链提货计划表（到货监控）=====
-    arrivals_by_barcode = {}   # barcode -> {total, by_date:{date:qty}, eta}
+    # ===== 2. 到货进度 =====
+    # 优先级：① 入库明细同步.xlsx（取最新日期 sheet，按货品编号关联）② 供应链提货计划表（按条形码关联）
     global_by_date = {}        # date_str -> {qty, skus:[]}
     future_week_total = 0.0
+    arrival_ready = False
+    arrival_source = ""
 
-    if not has_arrival_plan:
-        print("[info] 未检测到『供应链提货计划表』sheet，到货日历不可用（看板将展示在途汇总）", file=sys.stderr)
-
-    try:
-        if has_arrival_plan:
+    # ① 入库明细同步（优先）
+    ap = load_arrival_progress()
+    if ap is not None and ap["per_sku"]:
+        arrival_ready = True
+        arrival_source = "入库明细同步·" + ap["latest_sheet"] + "（" + ap["latest_date"] + " 更新）"
+        print(f"[info] 到货进度: {arrival_source}", file=sys.stderr)
+        for s in skus:
+            rec = ap["per_sku"].get(s.get("sku", ""))
+            if rec:
+                s["arrival_qty"] = round(rec["total"], 1)
+                s["arrival_eta"] = rec["eta"].isoformat() if rec["eta"] else None
+        for d, g in sorted(ap["timeline"].items()):
+            global_by_date[d] = g
+            days = (datetime.date.fromisoformat(d) - TODAY).days
+            if 0 < days <= 7:
+                future_week_total += g["qty"]
+    # ② 供应链提货计划表（回退）
+    elif has_arrival_plan:
+        try:
             wa = wb["供应链提货计划表"]
             war = list(wa.iter_rows(values_only=True))
             # 表头在 war[2]：A=条码(0) B=名称(1) C=未来一周提货计划(2) D..=日期
@@ -381,6 +480,7 @@ def compute(path=XLSX_PATH):
             for i, v in enumerate(header_row):
                 if isinstance(v, (datetime.datetime, datetime.date)):
                     date_cols[i] = v.date() if isinstance(v, datetime.datetime) else v
+            arrivals_by_barcode = {}
             # 数据从 war[3] 开始
             for r in war[3:]:
                 if not r or r[0] is None:
@@ -399,15 +499,18 @@ def compute(path=XLSX_PATH):
                         g["skus"].append({"name": r[1] if len(r) > 1 else "", "qty": q})
                         if (d - TODAY).days <= 7:
                             future_week_total += q
-    except Exception as e:
-        print("[warn] 读取提货计划表失败:", e, file=sys.stderr)
-
-    # 回填到 sku
-    for s in skus:
-        rec = arrivals_by_barcode.get(s["barcode"])
-        if rec:
-            s["arrival_qty"] = round(rec["total"], 1)
-            s["arrival_eta"] = rec["eta"].isoformat() if rec["eta"] else None
+            if arrivals_by_barcode:
+                arrival_ready = True
+                arrival_source = "供应链提货计划表"
+                for s in skus:
+                    rec = arrivals_by_barcode.get(s["barcode"])
+                    if rec:
+                        s["arrival_qty"] = round(rec["total"], 1)
+                        s["arrival_eta"] = rec["eta"].isoformat() if rec["eta"] else None
+        except Exception as e:
+            print("[warn] 读取提货计划表失败:", e, file=sys.stderr)
+    else:
+        print("[info] 未检测到到货进度数据（入库明细同步 / 供应链提货计划表），到货日历不可用", file=sys.stderr)
 
     # ===== 3. 汇总指标 =====
     kpi = {
@@ -445,10 +548,11 @@ def compute(path=XLSX_PATH):
     ]
 
     result = {
-        "version": "0.9",
+        "version": "0.11",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
-        "has_arrival_plan": has_arrival_plan,
+        "has_arrival_plan": arrival_ready,
+        "arrival_source": arrival_source,
         "src_sheet": src_sheet,
         "config": {
             "on_sale": sorted(ON_SALE),
@@ -475,11 +579,12 @@ def compute(path=XLSX_PATH):
 def write_json(result, path=OUT_JSON):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
-    print(f"[ok] 已生成 {path}  (在售SKU {result['kpi']['on_sale_sku']}, 货值 ¥{result['kpi']['total_value']:,.0f})")
+    print(f"[ok] 已生成 {path}  (在售SKU {result['kpi']['on_sale_sku']}, 货值 ￥{result['kpi']['total_value']:,.0f})")
 
 
-def bundle(result):
-    """生成自包含成品：把数据内嵌进 HTML，双击即可直接打开（无需服务器/无需额外操作）。"""
+def bundle(result, password=""):
+    """生成自包含成品：把数据内嵌进 HTML，双击即可直接打开（无需服务器/无需额外操作）。
+    传入 password 时注入登录门（SHA-256 哈希，不落明文）。"""
     tpl = os.path.join(OUT_DIR, "inventory_dashboard.html")
     with open(tpl, encoding="utf-8") as f:
         html = f.read()
@@ -489,10 +594,42 @@ def bundle(result):
         html = html.replace("<!--__EMBED_DATA__-->", script)
     else:  # 兜底：插到 body 开头
         html = html.replace("<body>", "<body>\n" + script, 1)
+    # 登录门密码哈希（不落明文）
+    pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest() if password else ""
+    pwd_script = ("<script>window.__PWD_HASH__ = '" + pwd_hash + "';</script>") if pwd_hash else "<script>window.__PWD_HASH__ = null;</script>"
+    html = html.replace("<!--__PWD_HASH__-->", pwd_script)
     out = os.path.join(OUT_DIR, "ITO库存看板.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"[ok] 已生成自包含成品 {out}  （直接双击打开即可）")
+    # 同步到 deploy/index.html（Vercel 部署源，Python 内完成，不依赖 cmd copy）
+    deploy_dir = os.path.join(OUT_DIR, "deploy")
+    if os.path.isdir(deploy_dir):
+        try:
+            shutil.copy(out, os.path.join(deploy_dir, "index.html"))
+            print("[ok] 已同步 deploy/index.html（Vercel 部署源）")
+        except Exception as e:
+            print(f"[warn] deploy/index.html 同步失败（不影响本地看板）: {e}", file=sys.stderr)
+    if password:
+        print(f"[ok] 已生成自包含成品 {out}  （含密码登录门）")
+    else:
+        print(f"[ok] 已生成自包含成品 {out}  （直接双击打开即可）")
+
+
+def get_password():
+    """获取登录密码：优先 --password 参数，否则读同目录 password.txt（.gitignore 排除，不入库）。"""
+    if "--password" in sys.argv:
+        try:
+            pw = sys.argv[sys.argv.index("--password") + 1].strip()
+            if pw:
+                return pw
+        except IndexError:
+            pass
+    pw_file = os.path.join(OUT_DIR, "password.txt")
+    if os.path.exists(pw_file):
+        pw = open(pw_file, encoding="utf-8").read().strip()
+        if pw:
+            return pw
+    return ""
 
 
 def serve(port=8765):
@@ -568,4 +705,4 @@ if __name__ == "__main__":
             sys.exit(f"[错误] 找不到数据源文件: {xlsx}\n请确认每日更新的「库存-每日.xlsx」已在 {OUT_DIR} 目录下。")
         res = compute(xlsx)
         write_json(res)
-        bundle(res)
+        bundle(res, password=get_password())
