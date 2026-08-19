@@ -25,6 +25,46 @@ def log_run(msg):
     except Exception:
         pass
 
+def verify_online():
+    """部署后自检：线上 inventory_data.json 的 generated_at 与本地一致 + 页面含更新时间轴标记。
+    容忍 Vercel CDN 缓存延迟（最多重试 5 次 × 5 秒）。
+    2026-08-19 新增：防止"部署成功但线上实际没更新/页面缺时间轴"的同类问题再次发生。"""
+    import json as _json
+    import urllib.request
+    base_url = 'https://ito-inventory-dashboard.vercel.app'
+    local_path = os.path.join(BASE, 'deploy', 'inventory_data.json')
+    try:
+        with open(local_path, encoding='utf-8') as f:
+            local_ts = _json.load(f).get('generated_at', '')
+    except Exception as e:
+        print(f'        [VERIFY] 本地数据读取失败: {e}')
+        return False
+    # 1) 线上数据时间戳对比（容忍缓存，重试 5 次）
+    online_ts = None
+    for i in range(5):
+        try:
+            with urllib.request.urlopen(base_url + '/inventory_data.json', timeout=30) as r:
+                online_ts = _json.load(r).get('generated_at', '')
+            if online_ts == local_ts:
+                break
+        except Exception:
+            online_ts = None
+        if i < 4:
+            time.sleep(5)
+    # 2) 页面关键标记检查（更新时间轴）
+    has_tl = False
+    try:
+        with urllib.request.urlopen(base_url + '/', timeout=30) as r:
+            html = r.read().decode('utf-8', errors='replace')
+            has_tl = '更新时间轴' in html
+    except Exception:
+        has_tl = False
+    ok = (online_ts == local_ts) and has_tl
+    print(f'        [VERIFY] 线上 generated_at={online_ts} | 本地={local_ts} | 时间轴标记={has_tl} -> {"OK" if ok else "FAIL"}')
+    log_run(f'deploy VERIFY {"OK" if ok else "FAIL"} (ts={online_ts}, tl={has_tl})')
+    return ok
+
+
 def main():
     # 读取 token
     if not os.path.exists(TOKEN_FILE):
@@ -75,6 +115,12 @@ def main():
             if success:
                 print(f'        [OK] 部署成功 (attempt {attempt})')
                 log_run('deploy OK')
+                # 部署后自检：线上数据与本地一致 + 页面含更新时间轴（防止"部署成功但线上没生效"）
+                try:
+                    if not verify_online():
+                        print('        [VERIFY FAIL] 线上内容与本地不一致或页面缺少更新时间轴，请人工检查！')
+                except Exception as e:
+                    print(f'        [VERIFY] 自检异常（不阻断）: {e}')
                 return 0
             else:
                 print(f'        [{attempt}/{max_attempts}] 部署失败 (exit={r.returncode})')
