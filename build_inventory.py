@@ -23,6 +23,7 @@ import math
 import shutil
 import hashlib
 import datetime
+import subprocess
 
 try:
     import openpyxl
@@ -601,6 +602,19 @@ def bundle(result, password=""):
     out = os.path.join(OUT_DIR, "ITO库存看板.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
+    # 注入更新时间轴（并入 build 流程：无论手动跑 / 双击 bat / 定时任务都不会再丢时间轴）
+    # 2026-08-19 事故根因：手动跑 build 绕过了 bat 的 3.5/4 步，重新生成的 HTML 覆盖了时间轴
+    tl_script = os.path.join(r"C:\Users\QwQ\WorkBuddy\2026-08-12-13-26-00\update_timeline", "update_timeline.py")
+    try:
+        r = subprocess.run(
+            [sys.executable, tl_script, out, "--status", "ok", "--note", "库存看板数据更新"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+        if r.returncode == 0:
+            print("[ok] 已注入更新时间轴")
+        else:
+            print(f"[warn] 更新时间轴注入失败: {r.stderr[:200]}", file=sys.stderr)
+    except Exception as e:
+        print(f"[warn] 更新时间轴注入异常（不影响看板）: {e}", file=sys.stderr)
     # 同步到 deploy/（Vercel 部署源，Python 内完成，不依赖 cmd copy）
     # 注意：线上 index.html 通过 fetch('inventory_data.json') 取数，
     # 必须连同数据文件一起同步，否则线上取数 404 → 数据永远不更新

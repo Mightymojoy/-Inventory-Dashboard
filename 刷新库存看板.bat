@@ -44,9 +44,7 @@ if errorlevel 1 echo [提示] 钉钉推送失败（不影响本地构建）
 echo [%date% %time%] dingtalk done >> run.log
 
 echo.
-echo [3.5/4] 正在写入更新时间轴...
-%PYCMD% "C:\Users\QwQ\WorkBuddy\2026-08-12-13-26-00\update_timeline\update_timeline.py" "%~dp0ITO库存看板.html" --status ok --note "库存看板数据更新"
-copy /Y "%~dp0ITO库存看板.html" "%~dp0deploy\index.html" > nul
+echo [3.5/4] 更新时间轴已由 build 流程自动注入（含 deploy/index.html 同步）
 
 echo.
 echo [4/4] 正在更新网页版（Vercel）...
