@@ -601,7 +601,9 @@ def bundle(result, password=""):
     out = os.path.join(OUT_DIR, "ITO库存看板.html")
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
-    # 同步到 deploy/index.html（Vercel 部署源，Python 内完成，不依赖 cmd copy）
+    # 同步到 deploy/（Vercel 部署源，Python 内完成，不依赖 cmd copy）
+    # 注意：线上 index.html 通过 fetch('inventory_data.json') 取数，
+    # 必须连同数据文件一起同步，否则线上取数 404 → 数据永远不更新
     deploy_dir = os.path.join(OUT_DIR, "deploy")
     if os.path.isdir(deploy_dir):
         try:
@@ -609,6 +611,11 @@ def bundle(result, password=""):
             print("[ok] 已同步 deploy/index.html（Vercel 部署源）")
         except Exception as e:
             print(f"[warn] deploy/index.html 同步失败（不影响本地看板）: {e}", file=sys.stderr)
+        try:
+            shutil.copy(OUT_JSON, os.path.join(deploy_dir, "inventory_data.json"))
+            print("[ok] 已同步 deploy/inventory_data.json（线上取数依赖此文件）")
+        except Exception as e:
+            print(f"[warn] deploy/inventory_data.json 同步失败（线上将取数 404）: {e}", file=sys.stderr)
     if password:
         print(f"[ok] 已生成自包含成品 {out}  （含密码登录门）")
     else:

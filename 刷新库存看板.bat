@@ -54,18 +54,12 @@ if not exist "vercel_token.txt" (
     echo [提示] 未找到 vercel_token.txt，跳过网页部署（本地看板已更新）
     goto :SKIPDEPLOY
 )
-set /p VTOKEN=<vercel_token.txt
 echo        正在部署...
-REM ===== 修复：清空 NODE_OPTIONS，避免 WorkBuddy 安全删除 shim 拦截 Vercel 缓存清理导致部署失败 =====
+REM ===== 修复 2026-08-19：改用独立 Python 部署脚本（精确退出码 + 失败自动重试 3 次 + 完整日志），根治 bat errorlevel 误判 =====
 set "NODE_OPTIONS="
-if exist "node_modules\\bin\\vercel.cmd" (
-    set DEPLOYCMD=call node_modules\\bin\\vercel.cmd
-) else (
-    set DEPLOYCMD=call npx --yes vercel
-)
-%DEPLOYCMD% deploy "deploy" --prod --yes --name ito-inventory-dashboard --token %VTOKEN%
+%PYCMD% "%~dp0deploy_vercel.py"
 if errorlevel 1 (
-    echo [提示] 网页部署未成功（网络或登录问题），本地看板已更新
+    echo [提示] 网页部署 3 次尝试均失败，详见 deploy_vercel_fail_*.log，本地看板已更新
     echo [%date% %time%] deploy FAIL >> run.log
 ) else (
     echo [ok] 网页版已更新: https://ito-inventory-dashboard.vercel.app

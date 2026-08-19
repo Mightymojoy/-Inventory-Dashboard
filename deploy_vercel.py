@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Vercel 部署脚本（2026-08-19 新增，替代 bat 内 for 循环，解决 errorlevel 误判）
+- 读取 vercel_token.txt
+- 调用 vercel CLI 部署 deploy/ 目录
+- 失败自动重试 3 次（每次间隔 5 秒）
+- 完整输出写入 deploy_vercel.log，失败副本 deploy_vercel_fail_N.log
+- 返回码：0=成功 1=失败
+"""
+import os
+import subprocess
+import sys
+import time
+import datetime
+
+BASE = r'D:\E盘文件\ITO库存看板系统'
+TOKEN_FILE = os.path.join(BASE, 'vercel_token.txt')
+LOG_FILE = os.path.join(BASE, 'deploy_vercel.log')
+RUN_LOG = os.path.join(BASE, 'run.log')
+
+def log_run(msg):
+    try:
+        with open(RUN_LOG, 'a', encoding='utf-8') as f:
+            f.write(f'[{datetime.datetime.now().strftime("%Y/%m/%d %a %H:%M:%S.%f")[:-3]}] {msg}\n')
+    except Exception:
+        pass
+
+def main():
+    # 读取 token
+    if not os.path.exists(TOKEN_FILE):
+        print('[ERROR] 未找到 vercel_token.txt')
+        log_run('deploy FAIL (no token file)')
+        return 1
+    with open(TOKEN_FILE, 'r', encoding='utf-8') as f:
+        token = f.read().strip()
+    if not token:
+        print('[ERROR] vercel_token.txt 为空')
+        log_run('deploy FAIL (empty token)')
+        return 1
+
+    # 清空 NODE_OPTIONS（避免 WorkBuddy safe-delete shim 干扰）
+    env = os.environ.copy()
+    env['NODE_OPTIONS'] = ''
+
+    # vercel.cmd 路径
+    vercel_cmd = os.path.join(BASE, 'node_modules', '.bin', 'vercel.cmd')
+    if not os.path.exists(vercel_cmd):
+        print('[ERROR] 未找到 node_modules/.bin/vercel.cmd')
+        log_run('deploy FAIL (vercel.cmd not found)')
+        return 1
+
+    deploy_dir = os.path.join(BASE, 'deploy')
+    cmd = [vercel_cmd, 'deploy', deploy_dir, '--prod', '--yes', '--name',
+           'ito-inventory-dashboard', '--token', token]
+
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        print(f'        尝试 {attempt}/{max_attempts} ...')
+        try:
+            r = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding='gbk',
+                errors='replace',
+                timeout=180,
+            )
+            combined = r.stdout + r.stderr
+            # 写入日志
+            with open(LOG_FILE, 'w', encoding='utf-8', errors='replace') as f:
+                f.write(combined)
+            # 判断成功：退出码 0 且包含 Ready/Aliased
+            success = (r.returncode == 0) and ('Ready' in combined or 'Aliased' in combined)
+            if success:
+                print(f'        [OK] 部署成功 (attempt {attempt})')
+                log_run('deploy OK')
+                return 0
+            else:
+                print(f'        [{attempt}/{max_attempts}] 部署失败 (exit={r.returncode})')
+                # 保存失败日志副本
+                fail_log = os.path.join(BASE, f'deploy_vercel_fail_{attempt}.log')
+                try:
+                    with open(fail_log, 'w', encoding='utf-8', errors='replace') as f:
+                        f.write(combined)
+                except Exception:
+                    pass
+                if attempt < max_attempts:
+                    print('        5 秒后重试...')
+                    log_run(f'deploy retry {attempt}/{max_attempts} FAIL (exit={r.returncode})')
+                    time.sleep(5)
+        except subprocess.TimeoutExpired:
+            print(f'        [{attempt}/{max_attempts}] 部署超时 (180s)')
+            log_run(f'deploy retry {attempt}/{max_attempts} FAIL (timeout)')
+            if attempt < max_attempts:
+                time.sleep(5)
+
+    print('[ERROR] 3 次尝试均失败，详见 deploy_vercel_fail_*.log')
+    log_run('deploy FAIL (3 attempts)')
+    return 1
+
+if __name__ == '__main__':
+    sys.exit(main())
