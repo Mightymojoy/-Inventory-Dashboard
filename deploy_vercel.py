@@ -81,6 +81,13 @@ def main():
     # 清空 NODE_OPTIONS（避免 WorkBuddy safe-delete shim 干扰）
     env = os.environ.copy()
     env['NODE_OPTIONS'] = ''
+    # 注入 Node.js bin 到 PATH（2026-08-20 修复：用户双击 cmd 环境的 PATH 不含 node，
+    # 导致 vercel.cmd 内部 'node 不是内部或外部命令' exit=1，部署 3 次全失败）
+    node_bin = r'C:\Users\QwQ\.workbuddy\binaries\node\versions\22.22.2'
+    if os.path.isdir(node_bin):
+        env['PATH'] = node_bin + os.pathsep + env.get('PATH', '')
+        env['NODE'] = node_bin + r'\node.exe'
+        print(f"        [fix] 已注入 Node.js bin: {node_bin}")
 
     # vercel.cmd 路径
     vercel_cmd = os.path.join(BASE, 'node_modules', '.bin', 'vercel.cmd')
