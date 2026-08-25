@@ -355,8 +355,12 @@
     <div class="card">
       <div class="cat-filter">
         <div class="filter-item">
-          <label>系列</label>
+          <label>品类</label>
           <select id="soCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>系列</label>
+          <select id="soSeries"></select>
         </div>
         <div class="filter-item">
           <label>状态</label>
@@ -802,7 +806,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var rows=Object.keys(hist).map(function(k){
       var r=hist[k];
       return {
-        code:r.sku, sku:r.sku, series:r.series, cat:r.series,
+        code:r.sku, sku:r.sku, series:r.series, cat:r.cat||'',
         color:r.color, size:r.size, name:r.name,
         first:r.first_stockout, last:r.last_stockout,
         days:r.stockout_days, span:r.calendar_span,
@@ -810,7 +814,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       };
     });
     makeFilterTable(rows,{
-      catId:'soCat', statusId:'soStatus', statusOptions:['缺货中','已恢复'],
+      catId:'soCat', seriesId:'soSeries', statusId:'soStatus', statusOptions:['缺货中','已恢复'],
       searchId:'soSearch', tableId:'soTable', countId:'soCount', subId:'soSub',
       sortBy:'first',
       defaultSub:'累计记录 '+rows.length+' 条 · 每次刷新自动增量更新',

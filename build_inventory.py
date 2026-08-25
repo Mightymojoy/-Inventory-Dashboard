@@ -624,6 +624,7 @@ def update_stockout_history(skus, today=None):
         else:  # 全新建档
             hist[sku] = {
                 "sku": sku,
+                "cat": s.get("cat", ""),
                 "series": s.get("series", ""), "color": s.get("color", ""),
                 "size": s.get("size", ""), "name": s.get("name", ""),
                 "first_stockout": today, "last_stockout": today,
@@ -633,10 +634,10 @@ def update_stockout_history(skus, today=None):
     for sku in list(hist.keys()):
         if hist[sku].get("status") == "缺货中" and sku not in cur:
             hist[sku]["status"] = "已恢复"
-    # 3) 同步最新名称信息（系列/颜色/尺寸/名称随数据源更新）
+    # 3) 同步最新名称信息（品类/系列/颜色/尺寸/名称随数据源更新）
     for sku, s in cur.items():
         if sku in hist:
-            for k in ("series", "color", "size", "name"):
+            for k in ("cat", "series", "color", "size", "name"):
                 if s.get(k):
                     hist[sku][k] = s[k]
     with open(hist_path, "w", encoding="utf-8") as f:
