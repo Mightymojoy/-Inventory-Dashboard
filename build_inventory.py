@@ -549,7 +549,7 @@ def compute(path=XLSX_PATH):
     ]
 
     result = {
-        "version": "0.11",
+        "version": "0.12",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
@@ -574,6 +574,76 @@ def compute(path=XLSX_PATH):
         "skus": skus,
     }
     return result
+
+
+# ---------------- 缺货历史档案（2026-08-25 新增） ----------------
+def _day_diff(d1, d2):
+    """两个 YYYY-MM-DD 字符串的间隔天数（d2-d1），解析失败返回 0"""
+    try:
+        a = datetime.datetime.strptime(d1, "%Y-%m-%d").date()
+        b = datetime.datetime.strptime(d2, "%Y-%m-%d").date()
+        return (b - a).days
+    except Exception:
+        return 0
+
+
+def update_stockout_history(skus, today=None):
+    """增量更新缺货历史档案 stockout_history.json（与看板刷新同频）。
+    口径：level=='缺货'（可售库存=0 或为负，定制/停采不计）。
+    - 本次缺货：
+      连续缺货（状态=缺货中）→ 末次=今天、累计天数+=日差（同一天重复 build 不叠加）、跨度=首→今+1
+      已恢复后再次缺货 → 保留首次缺货日与累计天数，状态回缺货中，天数继续累加
+      全新建档 → 首=末=今天、天数=1、跨度=1、状态=缺货中
+    - 历史缺货中但本次不缺货（已补货）→ 状态=已恢复（天数/跨度冻结）
+    返回最新 history dict（{sku: rec}）。"""
+    hist_path = os.path.join(OUT_DIR, "stockout_history.json")
+    hist = {}
+    if os.path.exists(hist_path):
+        try:
+            with open(hist_path, encoding="utf-8") as f:
+                hist = json.load(f)
+        except Exception:
+            hist = {}
+    if today is None:
+        today = datetime.date.today().isoformat()
+    cur = {s["sku"]: s for s in skus if s.get("level") == "缺货"}
+    # 1) 本次缺货 SKU：连续缺货累加 / 重新缺货续记 / 全新建档
+    for sku, s in cur.items():
+        if sku in hist and hist[sku].get("status") == "缺货中":
+            add = _day_diff(hist[sku].get("last_stockout", today), today)
+            hist[sku]["last_stockout"] = today
+            hist[sku]["stockout_days"] = int(hist[sku].get("stockout_days", 1)) + max(add, 0)
+            hist[sku]["calendar_span"] = _day_diff(hist[sku]["first_stockout"], today) + 1
+        elif sku in hist:  # 已恢复后再次缺货：保留首次缺货日与累计天数
+            rec = hist[sku]
+            rec["status"] = "缺货中"
+            rec["last_stockout"] = today
+            rec["stockout_days"] = int(rec.get("stockout_days", 0)) + 1
+            rec["calendar_span"] = _day_diff(rec["first_stockout"], today) + 1
+            hist[sku] = rec
+        else:  # 全新建档
+            hist[sku] = {
+                "sku": sku,
+                "series": s.get("series", ""), "color": s.get("color", ""),
+                "size": s.get("size", ""), "name": s.get("name", ""),
+                "first_stockout": today, "last_stockout": today,
+                "stockout_days": 1, "calendar_span": 1, "status": "缺货中",
+            }
+    # 2) 历史缺货中但本次不缺货 → 已恢复（天数/跨度冻结）
+    for sku in list(hist.keys()):
+        if hist[sku].get("status") == "缺货中" and sku not in cur:
+            hist[sku]["status"] = "已恢复"
+    # 3) 同步最新名称信息（系列/颜色/尺寸/名称随数据源更新）
+    for sku, s in cur.items():
+        if sku in hist:
+            for k in ("series", "color", "size", "name"):
+                if s.get(k):
+                    hist[sku][k] = s[k]
+    with open(hist_path, "w", encoding="utf-8") as f:
+        json.dump(hist, f, ensure_ascii=False, indent=2)
+    n_act = sum(1 for r in hist.values() if r["status"] == "缺货中")
+    print(f"[ok] 缺货历史已更新: 缺货中 {n_act} / 累计记录 {len(hist)}")
+    return hist
 
 
 # ---------------- 输出 / 服务 ----------------
@@ -725,5 +795,7 @@ if __name__ == "__main__":
         if not os.path.exists(xlsx):
             sys.exit(f"[错误] 找不到数据源文件: {xlsx}\n请确认每日更新的「库存-每日.xlsx」已在 {OUT_DIR} 目录下。")
         res = compute(xlsx)
+        # 缺货历史增量更新（2026-08-25）：持久化每个缺货 SKU 的首次/末次/天数/跨度/状态
+        res["stockout_history"] = update_stockout_history(res["skus"])
         write_json(res)
         bundle(res, password=get_password())

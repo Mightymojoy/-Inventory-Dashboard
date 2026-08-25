@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ITO 库存看板 v0.11</title>
+<title>ITO 库存看板 v0.12</title>
 <style>
   :root{
     --gold:#c9a962; --gold-soft:#e8dcc0; --gold-deep:#a8884a;
@@ -135,7 +135,7 @@
 <div id="jsError"></div>
 
 <header>
-  <div class="brand"><span class="mark">I</span> ITO 库存看板 <span class="ver" id="ver">v0.11</span></div>
+  <div class="brand"><span class="mark">I</span> ITO 库存看板 <span class="ver" id="ver">v0.12</span></div>
   <div class="spacer"></div>
   <div class="meta" id="meta">数据加载中…</div>
   <button class="btn" id="srcBtn" title="切换数据源">数据源：快照</button>
@@ -152,6 +152,7 @@
   <button data-tab="cat">分类维度</button>
   <button data-tab="catalog">商品总览</button>
   <button data-tab="accessory">配件赠品</button>
+  <button data-tab="stockout">缺货明细</button>
 </nav>
 
 <main>
@@ -347,6 +348,34 @@
       </tr></thead><tbody></tbody></table></div>
     </div>
   </section>
+
+  <!-- 缺货明细记录（2026-08-25 新增，数据来自 stockout_history.json 增量累积） -->
+  <section id="stockout">
+    <h2><span class="ic">▤</span>缺货明细记录 <span class="sub" id="soSub"></span></h2>
+    <div class="card">
+      <div class="cat-filter">
+        <div class="filter-item">
+          <label>系列</label>
+          <select id="soCat"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
+          <label>状态</label>
+          <select id="soStatus"></select>
+        </div>
+        <div class="filter-item filter-search">
+          <label>搜索 SKU</label>
+          <div class="search"><span class="ic">⌕</span><input id="soSearch" placeholder="商品名称 / 编码"></div>
+        </div>
+        <div class="filter-meta"><span class="badge" id="soCount"></span><span class="badge" id="soStat" style="background:#e8893b"></span></div>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table id="soTable"><thead><tr>
+        <th data-k="series" class="name">系列</th><th data-k="color">颜色</th><th data-k="size">尺寸</th>
+        <th data-k="first">首次缺货</th><th data-k="last">末次缺货</th>
+        <th data-k="days" class="num">累计缺货天数</th><th data-k="span" class="num">日历跨度</th>
+        <th data-k="level">当前状态</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
 </main>
 
 <div class="footer">ITO 库存看板 · 数据源 <code>ERP库存概况-每日.xlsx</code> · 看板仅读取不修改 · 数据准确 &gt; 省时</div>
@@ -451,14 +480,14 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* ===== 渲染 ===== */
   function render(){
-    document.getElementById('ver').textContent='v'+(DATA.version||'0.11');
+    document.getElementById('ver').textContent='v'+(DATA.version||'0.12');
     var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
     document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
     var srcBtn=document.getElementById('srcBtn');
     if(EMBEDDED){srcBtn.textContent='数据源：内置快照';srcBtn.disabled=true;srcBtn.style.opacity=.55;}
     else srcBtn.textContent='数据源：'+(LIVE?'实时':'快照');
     renderKPI();renderDonutMini();renderCatMini();renderHealth();
-    renderAlert();renderSlow();renderArrival();renderCat();renderCatalog();renderAccessory();renderSettings();
+    renderAlert();renderSlow();renderArrival();renderCat();renderCatalog();renderAccessory();renderStockout();renderSettings();
     document.getElementById('ovSub').textContent='在售 '+DATA.kpi.on_sale_sku+' SKU（含定制 '+DATA.kpi.custom_sku+'）';
   }
 
@@ -764,6 +793,44 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         {k:'price',cls:'num',f:function(r){return r.price>0?money(r.price):'-';}},
         {k:'kf',cls:'num'},{k:'stock',cls:'num'}
       ]
+    });
+  }
+
+  /* 缺货明细记录（2026-08-25）：series/color/size、首次/末次、累计天数、日历跨度、状态 */
+  function renderStockout(){
+    var hist=DATA.stockout_history||{};
+    var rows=Object.keys(hist).map(function(k){
+      var r=hist[k];
+      return {
+        code:r.sku, sku:r.sku, series:r.series, cat:r.series,
+        color:r.color, size:r.size, name:r.name,
+        first:r.first_stockout, last:r.last_stockout,
+        days:r.stockout_days, span:r.calendar_span,
+        level:r.status, status:r.status
+      };
+    });
+    makeFilterTable(rows,{
+      catId:'soCat', statusId:'soStatus', statusOptions:['缺货中','已恢复'],
+      searchId:'soSearch', tableId:'soTable', countId:'soCount', subId:'soSub',
+      sortBy:'first',
+      defaultSub:'累计记录 '+rows.length+' 条 · 每次刷新自动增量更新',
+      cols:[
+        {k:'series',cls:'name'},
+        {k:'color'},{k:'size'},
+        {k:'first'},{k:'last'},
+        {k:'days',cls:'num',f:function(r){return r.days+' 天';}},
+        {k:'span',cls:'num',f:function(r){return r.span+' 天';}},
+        {k:'level',f:function(r){
+          return r.level==='缺货中'
+            ?'<span class="pill" style="background:#d9534f">缺货中</span>'
+            :'<span class="pill" style="background:#3a9d6e">已恢复</span>';
+        }}
+      ],
+      summary:function(rows){
+        var act=rows.filter(function(r){return r.level==='缺货中';}).length;
+        var el=document.getElementById('soStat');
+        if(el) el.textContent='缺货中 '+act+' 条';
+      }
     });
   }
 
