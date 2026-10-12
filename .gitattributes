@@ -1,0 +1,8 @@
+# 行尾纪律（2026-10-12 事故后统一加入）
+# 起因：.bat 若被写入 LF 行尾，cmd.exe 解析批处理依赖 CRLF，会解析崩溃 →
+#       用户看到的是"双击闪退"，且没有任何报错信息。
+# 作用：无论本机 core.autocrlf 将来怎么变，这些扩展名检出/提交时一律强制正确行尾。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh  text eol=lf
