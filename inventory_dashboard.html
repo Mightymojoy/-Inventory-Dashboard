@@ -116,6 +116,23 @@
   .cat-filter select:hover{border-color:var(--gold)}
   .cat-filter select:focus{outline:none;border-color:var(--gold-deep);box-shadow:0 0 0 3px rgba(201,169,98,.12)}
   .cat-filter .search{margin:0}
+/* ===== 陆续到货分批展开（2026-10-27） ===== */
+.bt{display:inline-block;text-align:left}
+.bt>summary{list-style:none;cursor:pointer;white-space:nowrap}
+.bt>summary::-webkit-details-marker{display:none}
+.bt>summary:hover .bth{text-decoration:underline}
+.bt .bth{font-weight:600;color:var(--ink,#1d1b16)}
+.bt .btn2{display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;
+  background:rgba(201,169,98,.16);color:#a8873f;font-size:10.5px;font-weight:700;
+  font-style:normal;vertical-align:1px}
+.bt .btl{margin-top:3px;padding:4px 8px;border-left:2px solid rgba(201,169,98,.5);
+  color:var(--ink-2,#5b554a);font-size:11.5px;line-height:1.65;white-space:nowrap}
+.bt .btl b{font-variant-numeric:tabular-nums;color:var(--ink,#1d1b16)}
+.bc{font-style:normal;font-size:10.5px;font-weight:700;color:#a8873f;margin-left:2px}
+.arr-more{margin-top:4px}
+.arr-more>summary{list-style:none;cursor:pointer;color:#a8873f;font-size:11.5px;font-weight:600}
+.arr-more>summary::-webkit-details-marker{display:none}
+.arr-more>summary:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -612,6 +629,29 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   }
   function updateCount(tableId){var tb=document.getElementById(tableId);var n=(tb.querySelector('tbody')._rows||[]).length;var badge=tb.id.replace('Table','Count');var el=document.getElementById(badge);if(el)el.textContent=n+' 条';}
 
+  /* ===== 陆续到货分批渲染（2026-10-27 新增）=====
+     背景：同一 SKU 可能分多批到货（如 10-27×50 / 10-29×100 / 10-31×25）。
+     旧口径只写「最早一天 + 跨期合计」，导致缺货&预警与到货日历两处日期对不上。
+     现由 arrival_batches 作为唯一事实源：合计仍挂在数量列，日期列显示「首→末 [N批]」可展开看每批。
+     用原生 <details> 而非 JS 弹层：零 z-index/遮挡风险，且点击不冒泡到行上的 openDetail。 */
+  function batchCell(r){
+    var b=r.arrival_batches||[];
+    var d2=function(s){return String(s||'').replace(/^\d{4}-/,'');};
+    if(!b.length) return r.arrival_eta?d2(r.arrival_eta):'-';
+    if(b.length===1) return d2(b[0].date);
+    var head=d2(b[0].date)+'→'+d2(b[b.length-1].date);
+    var det=b.map(function(x){return d2(x.date)+' <b>×'+x.qty+'</b>';}).join('<br>');
+    return '<details class="bt" onclick="event.stopPropagation()"><summary>'
+      +'<span class="bth">'+head+'</span><i class="btn2">'+b.length+'批</i></summary>'
+      +'<div class="btl">'+det+'</div></details>';
+  }
+  function qtyCell(r){
+    var n=(r.arrival_batches||[]).length;
+    var q=r.arrival_qty;
+    if(!q) return '-';
+    return q+(n>1?'<i class="bc">('+n+'批)</i>':'');
+  }
+
   function renderAlert(){
     /* 2026-10-27：生命周期与库存状态分开筛。
        「缺货」只由在售产生 —— 停采不会补货、未上市本来没货，默认视图只显示在售商品。 */
@@ -642,8 +682,8 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         {k:'kf',cls:'num',f:function(r){return r.kf;}},
         {k:'turnover',cls:'num',f:function(r){return r.turnover==null?'-':r.turnover;}},
         {k:'sellout',f:function(r){return r.sellout||'-';}},
-        {k:'in_transit',cls:'num'},{k:'arrival_qty',cls:'num'},
-        {k:'arrival_eta',f:function(r){return r.arrival_eta||'-';}}
+        {k:'in_transit',cls:'num'},{k:'arrival_qty',cls:'num',f:qtyCell},
+        {k:'arrival_eta',f:batchCell}
       ];
       var tb=document.getElementById('alertTable');tb.querySelector('tbody')._all=rows;
       buildTable('alertTable',rows,cols,'kf');
@@ -734,7 +774,16 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var hasPlan=DATA.has_arrival_plan!==false && tl.length>0;
     var html='';
     if(!tl.length)html='<div class="empty">'+ (DATA.has_arrival_plan===false?'当前文件未含「供应链提货计划表」，暂无按日期到货计划。<br>（在途量见总览 KPI；若每日导出文件已包含该表，刷新后自动恢复日历）':'暂无未来到货计划') +'</div>';
-    tl.forEach(function(d){var sk=(d.skus||[]).map(function(s){return s.name.replace('ITO ','')+' ×'+s.qty;}).join('<br>');
+    tl.forEach(function(d){
+      var all=d.skus||[];
+      var one=function(s){return s.name.replace('ITO ','')+' ×'+s.qty;};
+      var sk=all.slice(0,8).map(one).join('<br>');
+      /* 2026-10-27：此前数据侧只保留当日前 8 个 SKU，其余被静默丢弃（10-27 实有 41 个）；
+         现保留全量并在前端折叠，避免「总量对得上、明细查不到」。 */
+      var rest=all.slice(8);
+      if(rest.length) sk+='<details class="arr-more" onclick="event.stopPropagation()"><summary>还有 '
+        +rest.length+' 条（共 '+(d.sku_count||all.length)+' 个 SKU）</summary>'
+        +rest.map(one).join('<br>')+'</details>';
       html+='<div class="day"><div class="dt">'+d.date+'</div><div class="qt">'+fmt(d.qty)+'</div><div class="sk">'+sk+'</div></div>';});
     document.getElementById('arrivalTl').innerHTML=html;
     document.getElementById('arrWeek').textContent=hasPlan?fmt(DATA.kpi.arrival_week):'—';
@@ -748,7 +797,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     rows.forEach(function(r){r._id=r.code;r._click=true;});
     var cols=[
       {k:'name',cls:'name'},{k:'cat'},{k:'kf',cls:'num'},
-      {k:'arrival_qty',cls:'num'},{k:'arrival_eta',f:function(r){return r.arrival_eta||'-';}},
+      {k:'arrival_qty',cls:'num',f:qtyCell},{k:'arrival_eta',f:batchCell},
       {k:'level',f:function(r){return pill(r.level);}}
     ];
     var tb=document.getElementById('arrTable');tb.querySelector('tbody')._all=rows;
@@ -951,7 +1000,13 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       ['日均销量',s.daily],['周转天数',s.turnover==null?'-':s.turnover],['预计售罄',s.sellout||'-'],
       ['零售价',money(s.price)],['库存货值(零售)',money(s.value)],
       ['采购在途',s.purchase],['生产在途',s.produce],['调拨在途',s.transfer],['在途合计',s.in_transit],
-      ['未来到货量',s.arrival_qty],['预计到货日',s.arrival_eta||'-']
+      ['未来到货量',qtyCell(s)],
+      ['预计到货日',batchCell(s)||'-'],
+      ['到货批次',(function(){
+        var b=s.arrival_batches||[];
+        if(!b.length) return '-';
+        return b.map(function(x){return String(x.date).replace(/^\d{4}-/,'')+' ×'+x.qty;}).join('　');
+      })()]
     ];
     document.getElementById('dBody').innerHTML='<div class="kv">'+rows.map(function(r){return '<div class="k">'+r[0]+'</div><div class="vv">'+r[1]+'</div>';}).join('')+'</div>';
     document.getElementById('detailToggle').checked=true;

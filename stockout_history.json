@@ -1471,5 +1471,20 @@
     "status": "缺货中",
     "lifecycle": "在售",
     "code": "6979918614026"
+  },
+  "CPSSD2604S24BRN04F116": {
+    "sku": "CPSSD2604S24BRN04F116",
+    "code": "6979918613043",
+    "cat": "旅行箱",
+    "series": "PISTACHIO STRIPED",
+    "color": "棕褐",
+    "size": "24英寸",
+    "name": "ITO PISTACHIO STRIPED系列 亮面棕褐24英寸旅行箱 2026版",
+    "first_stockout": "2026-10-27",
+    "last_stockout": "2026-10-27",
+    "stockout_days": 1,
+    "calendar_span": 1,
+    "status": "缺货中",
+    "lifecycle": "在售"
   }
 }

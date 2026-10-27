@@ -387,6 +387,18 @@ def find_source_sheet(wb):
     return wb.sheetnames[0]
 
 
+def _fill_batches(sku_row, rec):
+    """把 per_sku 的 by_date 分批明细写入 SKU —— 陆续到货的唯一事实源。
+    2026-10-27 新增：此前只写 arrival_eta=最早一天 + arrival_qty=跨期合计，
+    分批关系被压平，同一 SKU 多批到货时「缺货&预警」与「到货日历」两处日期必然对不上。"""
+    bd = rec.get("by_date") or {}
+    sku_row["arrival_batches"] = [
+        {"date": d, "qty": round(q, 1)} for d, q in sorted(bd.items()) if q > 0
+    ]
+    sku_row["arrival_qty"] = round(rec["total"], 1)
+    sku_row["arrival_eta"] = rec["eta"].isoformat() if rec.get("eta") else None
+
+
 def load_arrival_progress(path=ARRIVAL_SYNC_XLSX):
     """读取『入库明细同步.xlsx』，取**最新日期命名**的 sheet 的交付计划。
     返回 {per_sku, timeline, latest_sheet, latest_date}；无文件/无日期 sheet 返回 None。
@@ -618,8 +630,9 @@ def compute(path=XLSX_PATH):
             "level": level,
             "lifecycle": lifecycle,            # 生命周期：在售/停采/未上市/定制（2026-10-27）
             "lifecycle_reason": life_reason,   # 判定依据，便于核对口径
-            "arrival_qty": 0,      # 后续由提货计划表填充
-            "arrival_eta": None,   # 后续填充
+            "arrival_qty": 0,      # 后续由提货计划表填充（=arrival_batches 合计）
+            "arrival_eta": None,   # 后续填充（=最早批次日期，供排序/兼容旧口径）
+            "arrival_batches": [], # 陆续到货分批： [{date, qty}] 按日期升序（2026-10-27 新增）
         })
 
     # ===== 1.5 商品 SKU 总览（全量正品目录：在售 + 停采正品）=====
@@ -687,8 +700,7 @@ def compute(path=XLSX_PATH):
         for s in skus:
             rec = ap["per_sku"].get(s.get("sku", ""))
             if rec:
-                s["arrival_qty"] = round(rec["total"], 1)
-                s["arrival_eta"] = rec["eta"].isoformat() if rec["eta"] else None
+                _fill_batches(s, rec)
         for d, g in sorted(ap["timeline"].items()):
             global_by_date[d] = g
             days = (datetime.date.fromisoformat(d) - TODAY).days
@@ -730,8 +742,7 @@ def compute(path=XLSX_PATH):
                 for s in skus:
                     rec = arrivals_by_barcode.get(s["barcode"])
                     if rec:
-                        s["arrival_qty"] = round(rec["total"], 1)
-                        s["arrival_eta"] = rec["eta"].isoformat() if rec["eta"] else None
+                        _fill_batches(s, rec)
         except Exception as e:
             print("[warn] 读取提货计划表失败:", e, file=sys.stderr)
     else:
@@ -832,14 +843,32 @@ def compute(path=XLSX_PATH):
             c["custom"] += 1
 
     # 到货按日期排序
-    arrival_timeline = [
-        {"date": d, "qty": round(g["qty"], 1),
-         "skus": sorted(g["skus"], key=lambda x: -x["qty"])[:8]}
-        for d, g in sorted(global_by_date.items())
-    ]
+    # 2026-10-27 修复：原先 `sorted(...)[:8]` 只保留当日前 8 个 SKU，而当日 qt 是全额合计，
+    # 结果「总量对得上、明细消失」——小批量 SKU 在日历里查不到，与缺货&预警的到货日期对不上
+    # （实例：10-27 实有 41 个 SKU，日历只显示 8 个，墨灰 20/25 英寸的 50/70 件被截掉）。
+    # 现改为保留当日全部分批明细，前端自行决定折叠展示；同名多行合并为一条。
+    def _merge_day_skus(g):
+        agg = {}
+        for it in g["skus"]:
+            nm = it.get("name") or ""
+            if nm in agg:
+                agg[nm]["qty"] += it["qty"]
+            else:
+                agg[nm] = {"name": nm, "qty": it["qty"]}
+        return sorted(agg.values(), key=lambda x: -x["qty"])
+
+    arrival_timeline = []
+    for d, g in sorted(global_by_date.items()):
+        _sk = _merge_day_skus(g)
+        arrival_timeline.append({
+            "date": d,
+            "qty": round(g["qty"], 1),
+            "sku_count": len(_sk),
+            "skus": _sk,
+        })
 
     result = {
-        "version": "0.13.3",
+        "version": "0.13.4",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
