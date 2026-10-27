@@ -530,11 +530,11 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var k=DATA.kpi;
     var cards=[
       {ic:'box',v:k.on_sale_sku,l:'在售 SKU',s:'在售 '+k.stocked_sku+' · 定制 '+k.custom_sku},
-      {ic:'layers',v:fmt(k.total_kf),l:'总可发库存',s:'件（在售+定制）'},
+      {ic:'layers',v:fmt(k.total_kf),l:'总可发库存',s:'件（含限定色尾货）'},
       {ic:'store',v:money(k.total_value),l:'库存货值(零售)',s:'可发×零售价'},
       {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'仅计在售商品',cls:'alert'},
       {ic:'alert',v:k.warning,l:'预警 SKU',s:'急需+风险',cls:'warn'},
-      {ic:'layers',v:k.discontinued_sku,l:'停采 SKU',s:'ERP停采分类·'+(k.discontinued_has_stock||0)+'个仍有货',cls:'off'},
+      {ic:'layers',v:k.discontinued_sku,l:'停采 SKU',s:'分类停采+限定色·'+(k.discontinued_has_stock||0)+'个仍有货',cls:'off'},
       {ic:'layers',v:k.upcoming_sku,l:'未上市 SKU',s:'FIND ITO+人工名单，不计缺货',cls:'off'},
       {ic:'truck',v:fmt(k.in_transit),l:'在途总量',s:'采+产+调拨'},
       {ic:'truck',v:fmt(k.arrival_week),l:'未来一周到货',s:'提货计划'},

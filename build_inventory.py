@@ -88,6 +88,28 @@ UPCOMING_EXTRA = (
      "同系列其他颜色均已上架，此色未上市（2026-10-27 人工确认）"),
 )
 
+# 未上市名单·第二批（按「商品编码」锁定，2026-10-27 老大指定）：
+#   ITO PACKING CUBE 系列（瑾紫/屿灰/羽白 × 6L/9L/12L，共 9 个）
+#   ITO VANITY 系列（瑾紫/晴蓝 × 4L，共 2 个）
+#   ERP 分类仍是「旅行生活」、名称也不带 FIND ITO，但均未上市、可发恒为 0，
+#   不应用「缺货」占用需要人行动的指标。
+# 已核对（2026-10-27）：这两个系列在库内恰好 11 个 SKU，与名单**完全一一对应**，
+#   无遗漏、无多余。第二批起统一改用商品编码而非名称片段，避免 ERP 改名导致失配。
+# 维护：正式上市后请删除对应条目，否则会一直显示「未上市」。
+UPCOMING_CODES = {
+    "6979918615184": "PACKING CUBE 瑾紫6L",
+    "6979918615191": "PACKING CUBE 屿灰6L",
+    "6979918615207": "PACKING CUBE 羽白6L",
+    "6979918615214": "PACKING CUBE 瑾紫9L",
+    "6979918615221": "PACKING CUBE 屿灰9L",
+    "6979918615238": "PACKING CUBE 羽白9L",
+    "6979918615245": "PACKING CUBE 瑾紫12L",
+    "6979918615252": "PACKING CUBE 屿灰12L",
+    "6979918615269": "PACKING CUBE 羽白12L",
+    "6979918615276": "VANITY 瑾紫4L",
+    "6979918615283": "VANITY 晴蓝4L",
+}
+
 # 停采 / 在售一律以 ERP「分类」字段为唯一依据（2026-10-27 老大确认）：
 #   「停采旅行箱」「停采包袋」「停采赠品」「停采其他」… → 停采
 #   「旅行箱」「包袋」「旅行生活」「定制旅行箱」「定制包袋」 → 在售
@@ -97,18 +119,43 @@ UPCOMING_EXTRA = (
 #   ITO PISTACHIO STRIPED系列 亮面烟白28英寸旅行箱  分类=旅行箱、可发 26 → 在售
 #   ITO PISTACHIO STRIPED系列 亮面炭黑30英寸旅行箱  分类=停采旅行箱       → 停采
 
+# 年度限定色停采名单（人工确认，2026-10-27 老大指定）：
+#   气泡粉 / 波子绿 / 苏打橙 是「每年的限定色」，售完即止、不再补货，属停采。
+#   **只对行李箱生效。** 这三个色名在库里一共命中 45 个 SKU：
+#       旅行箱   9 个（可发  351 件）→ 本名单，判停采
+#       包袋     6 个（可发  646 件）→ 正常在售，不动
+#       旅行生活 30 个（可发 4717 件）→ 正常在售，不动（伞/水杯/购物袋/洗漱包/行李牌）
+#   所以这里**故意用「商品编码」精确锁定，不写色名关键字规则** ——
+#   关键字规则会把 5363 件正常在售库存打成停采，KPI 出现虚假改善。
+# 维护：明年这三色若作为新年度限定色回归，是**新的商品编码**，本名单不会误伤；
+#       反之若新增尺寸，需把新编码补进来，否则会仍判「在售」。
+LIMITED_COLOR_DISC = {
+    "6920411322055": "亮面气泡粉20英寸旅行箱 TRUNK",
+    "6920411322086": "亮面气泡粉26英寸旅行箱 TRUNK",
+    "6920411322116": "亮面气泡粉30英寸旅行箱 TRUNK",
+    "6920411322079": "亮面波子绿20英寸旅行箱 TRUNK",
+    "6920411322109": "亮面波子绿26英寸旅行箱 TRUNK",
+    "6920411322130": "亮面波子绿30英寸旅行箱 TRUNK",
+    "6920411322062": "亮面苏打橙20英寸旅行箱 TRUNK",
+    "6920411322093": "亮面苏打橙26英寸旅行箱 TRUNK",
+    "6920411322123": "亮面苏打橙30英寸旅行箱 TRUNK",
+}
+LIMITED_COLOR_WHY = "年度限定色（气泡粉/波子绿/苏打橙），售完即止不补货"
 
-def detect_lifecycle(name, cat):
+
+def detect_lifecycle(name, cat, code=""):
     """判定商品生命周期，返回 (lifecycle, reason)。
 
     优先级（顺序不可换）：
-      1. 未上市   —— 名称含 FIND ITO，或命中 UPCOMING_EXTRA 人工名单
+      1. 未上市   —— 名称含 FIND ITO，或命中 UPCOMING_EXTRA（名称片段）/ UPCOMING_CODES（商品编码）
       2. 定制     —— 按需定制分类，可发=0 属正常，不参与缺货/预警
       3. 分类停采 —— 分类本身以「停采」开头（ERP 唯一依据）
-      4. 在售
+      4. 限定色停采 —— 命中 LIMITED_COLOR_DISC 商品编码（人工名单，仅行李箱）
+      5. 在售
 
     停采与在售只看 ERP「分类」字段，不做名称推断（2026-10-27 老大确认）。
     定制必须排在分类停采之前：定制款可发=0 是 B 端订单常态，不是缺货。
+    限定色排在分类停采之后：ERP 已明确停采的直接采信，名单只补 ERP 未标注的部分。
     """
     upper = (name or "").upper()
     if UPCOMING_MARK in upper:
@@ -116,10 +163,14 @@ def detect_lifecycle(name, cat):
     for frag, why in UPCOMING_EXTRA:
         if frag in (name or ""):
             return LIFE_UPCOMING, why
+    if code and str(code).strip() in UPCOMING_CODES:
+        return LIFE_UPCOMING, "ERP 未标记但未上市（人工名单 %s）" % UPCOMING_CODES[str(code).strip()]
     if cat in MADE_TO_ORDER:
         return LIFE_CUSTOM, "定制分类"
     if str(cat or "").startswith("停采"):
         return LIFE_DISCONTINUED, "分类为停采"
+    if code and str(code).strip() in LIMITED_COLOR_DISC:
+        return LIFE_DISCONTINUED, LIMITED_COLOR_WHY
     return LIFE_ON_SALE, ""
 
 # ---------------- 工具 ----------------
@@ -384,6 +435,8 @@ def compute(path=XLSX_PATH):
         produce = num(r[f_produce])
         transfer = num(r[f_transfer])
         barcode = r[f_barcode] if f_barcode is not None else None
+        # 商品编码提前取：限定色停采名单按编码锁定，必须在生命周期判定前就有值
+        code = str(r[f_code]).strip() if f_code is not None and r[f_code] is not None else ""
 
         # 日均销量：优先 7天/7，回退 14天/14，再回退 月/30
         if d7 > 0:
@@ -395,7 +448,7 @@ def compute(path=XLSX_PATH):
         else:
             daily = 0.0
 
-        lifecycle, life_reason = detect_lifecycle(name, cat)
+        lifecycle, life_reason = detect_lifecycle(name, cat, code)
 
         if lifecycle == LIFE_CUSTOM:
             level = "定制"
@@ -435,7 +488,7 @@ def compute(path=XLSX_PATH):
         value_retail = max(kf, 0.0) * price
 
         # 颜色/尺寸：有『匹配表（勿删）』优先用匹配表；无匹配表（新格式单 sheet）直接用数据源 颜色/尺寸 列
-        code_str = str(r[f_code]).strip() if f_code is not None and r[f_code] is not None else ""
+        code_str = code   # 复用上方已取的 code（限定色名单需要，故提前求值）
         sku_no = str(r[f_sku]).strip() if f_sku is not None and r[f_sku] is not None else ""
         mt = matching.get(code_str, None)
         mt_has = bool(mt and (mt["color"] or mt["size"]))
@@ -518,9 +571,12 @@ def compute(path=XLSX_PATH):
             # 走统一生命周期判定（2026-10-27）。
             # 原写法 `"在售" if cat in ON_SALE else ("定制" if cat in MADE_TO_ORDER else "停采")`
             # 里 ON_SALE 已包含 MADE_TO_ORDER，导致「定制」分支永远不可达（死代码），一并修正。
-            life_c, _lr = detect_lifecycle(name, cat)
+            life_c, _lr = detect_lifecycle(name, cat, code)
             item["status"] = life_c
             item["lifecycle"] = life_c
+            # 判定依据留档（2026-10-27）：限定色 / 未上市人工名单等无法从 ERP 字段
+            # 直接看出的判定，必须能追溯原因，否则下次没人说得清为什么是停采。
+            item["lifecycle_reason"] = _lr
             catalog.append(item)
         elif cat in ACCESSORY_CATS:
             item["kf"] = num(r[f_kf]) if f_kf is not None else 0
@@ -621,7 +677,10 @@ def compute(path=XLSX_PATH):
         "discontinued_kf": _dc_kf,                          # 停采商品可发合计（清货参考）
         "discontinued_has_stock": _dc_has,                  # 停采但仍有货的 SKU 数
         "upcoming_sku": life_cnt[LIFE_UPCOMING],            # 未上市（新增）
-        # 合计口径保持全量（停采品的货仍在仓、货值真实），各生命周期分解见 lifecycle 块
+        # 合计口径保持全量（停采尾货仍在仓、仍可发，货值真实），各生命周期分解见 lifecycle 块。
+        # 注意：2026-10-27 起「限定色停采」的商品 ERP 分类仍是旅行箱，仍在池内，
+        # 所以 total_kf 会包含这部分尾货；KPI 卡副标题已由「在售+定制」改为
+        # 「含限定色尾货」，以免读者加总 在售+定制 后对不上。
         "total_kf": round(sum(s["kf"] for s in skus), 1),
         "total_value": round(sum(s["value"] for s in skus), 1),
         "out_of_stock": sum(1 for s in skus if s["level"] == "缺货"),
@@ -654,7 +713,7 @@ def compute(path=XLSX_PATH):
     lifecycle[LIFE_DISCONTINUED]["sku"] = len(_dc)
     lifecycle[LIFE_DISCONTINUED]["kf"] = _dc_kf
     lifecycle[LIFE_DISCONTINUED]["value"] = round(
-        sum(float(c.get("price") or 0) * float(c.get("kf") or 0) for c in _dc), 1)
+        sum(float(c.get("price") or 0) * max(float(c.get("kf") or 0), 0.0) for c in _dc), 1)
     lifecycle[LIFE_DISCONTINUED]["has_stock"] = _dc_has
     lifecycle[LIFE_DISCONTINUED]["source"] = "catalog（停采分类，不进在售池）"
 
@@ -768,6 +827,13 @@ def update_stockout_history(skus, today=None):
             hist = {}
     if today is None:
         today = datetime.date.today().isoformat()
+    # 历史档案的键是「货品编号」，而限定色停采名单按「商品编码」锁定，
+    # 两者需互查。停采 SKU 仍在 skus 池内（ERP 分类仍是旅行箱/包袋，只是
+    # lifecycle 被判停采），所以从 skus 建反查表即可覆盖。
+    _code_by_sku = {}
+    for _s in skus:
+        if _s.get("sku"):
+            _code_by_sku[_s["sku"]] = _s.get("code") or ""
     cur = {s["sku"]: s for s in skus
            if s.get("level") == "缺货" and s.get("lifecycle") == LIFE_ON_SALE}
     # 1) 本次缺货 SKU：连续缺货累加 / 重新缺货续记 / 全新建档
@@ -787,6 +853,7 @@ def update_stockout_history(skus, today=None):
         else:  # 全新建档
             hist[sku] = {
                 "sku": sku,
+                "code": s.get("code", ""),
                 "cat": s.get("cat", ""),
                 "series": s.get("series", ""), "color": s.get("color", ""),
                 "size": s.get("size", ""), "name": s.get("name", ""),
@@ -800,7 +867,8 @@ def update_stockout_history(skus, today=None):
         if hist[sku].get("status") != "缺货中" or sku in cur:
             continue
         rec = hist[sku]
-        lc, _rs = detect_lifecycle(rec.get("name", ""), rec.get("cat", ""))
+        lc, _rs = detect_lifecycle(rec.get("name", ""), rec.get("cat", ""),
+                                   rec.get("code") or _code_by_sku.get(sku, ""))
         rec["lifecycle"] = lc
         if lc == LIFE_UPCOMING:
             rec["status"] = "已下市"
@@ -811,7 +879,7 @@ def update_stockout_history(skus, today=None):
     # 3) 同步最新名称信息（品类/系列/颜色/尺寸/名称随数据源更新）
     for sku, s in cur.items():
         if sku in hist:
-            for k in ("cat", "series", "color", "size", "name", "lifecycle"):
+            for k in ("cat", "series", "color", "size", "name", "lifecycle", "code"):
                 if s.get(k):
                     hist[sku][k] = s[k]
     with open(hist_path, "w", encoding="utf-8") as f:

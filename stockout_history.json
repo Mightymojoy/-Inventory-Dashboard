@@ -50,7 +50,8 @@
     "calendar_span": 64,
     "status": "缺货中",
     "cat": "旅行生活",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411322956"
   },
   "LLT2I2603S00PNK06N028": {
     "sku": "LLT2I2603S00PNK06N028",
@@ -64,7 +65,8 @@
     "calendar_span": 64,
     "status": "缺货中",
     "cat": "旅行生活",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6979918612947"
   },
   "LCMBG2604A00ORE01N000": {
     "sku": "LCMBG2604A00ORE01N000",
@@ -247,8 +249,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A06GRY14N000": {
     "sku": "LPKCB2608A06GRY14N000",
@@ -261,8 +263,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A06WHI12N000": {
     "sku": "LPKCB2608A06WHI12N000",
@@ -275,8 +277,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A09VLT08N000": {
     "sku": "LPKCB2608A09VLT08N000",
@@ -289,8 +291,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A09GRY14N000": {
     "sku": "LPKCB2608A09GRY14N000",
@@ -303,8 +305,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A09WHI12N000": {
     "sku": "LPKCB2608A09WHI12N000",
@@ -317,8 +319,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A12VLT08N000": {
     "sku": "LPKCB2608A12VLT08N000",
@@ -331,8 +333,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A12GRY14N000": {
     "sku": "LPKCB2608A12GRY14N000",
@@ -345,8 +347,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LPKCB2608A12WHI12N000": {
     "sku": "LPKCB2608A12WHI12N000",
@@ -359,8 +361,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LVNTY2608A04VLT08N000": {
     "sku": "LVNTY2608A04VLT08N000",
@@ -373,8 +375,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "LVNTY2608A04BLU20N000": {
     "sku": "LVNTY2608A04BLU20N000",
@@ -387,8 +389,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 58,
     "calendar_span": 58,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已下市",
+    "lifecycle": "未上市"
   },
   "CCLWV2501S29GRN18A000": {
     "sku": "CCLWV2501S29GRN18A000",
@@ -414,8 +416,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 51,
     "calendar_span": 51,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已停采",
+    "lifecycle": "停采"
   },
   "CPSPS2604E20BRN04F000": {
     "sku": "CPSPS2604E20BRN04F000",
@@ -1294,8 +1296,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 28,
     "calendar_span": 44,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已停采",
+    "lifecycle": "停采"
   },
   "CP2ST2512S26PNK06G115": {
     "sku": "CP2ST2512S26PNK06G115",
@@ -1308,8 +1310,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 29,
     "calendar_span": 43,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已停采",
+    "lifecycle": "停采"
   },
   "CPSSD2604S20BRN04F116": {
     "sku": "CPSSD2604S20BRN04F116",
@@ -1335,8 +1337,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 31,
     "calendar_span": 38,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已停采",
+    "lifecycle": "停采"
   },
   "CPSPS2604E20WHI03F000": {
     "sku": "CPSPS2604E20WHI03F000",
@@ -1363,7 +1365,8 @@
     "stockout_days": 10,
     "calendar_span": 20,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411317402"
   },
   "LLT2I2603S00PNK06N027": {
     "sku": "LLT2I2603S00PNK06N027",
@@ -1377,7 +1380,8 @@
     "stockout_days": 19,
     "calendar_span": 19,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6979918612930"
   },
   "CBB28B1B1": {
     "sku": "CBB28B1B1",
@@ -1391,7 +1395,8 @@
     "stockout_days": 14,
     "calendar_span": 13,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411302767"
   },
   "CP2ST2512S26GRN04G115": {
     "sku": "CP2ST2512S26GRN04G115",
@@ -1404,8 +1409,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 13,
     "calendar_span": 13,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已停采",
+    "lifecycle": "停采"
   },
   "DTFB22503E12BLU16B000": {
     "sku": "DTFB22503E12BLU16B000",
@@ -1419,7 +1424,8 @@
     "stockout_days": 7,
     "calendar_span": 8,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411318669"
   },
   "F016258601": {
     "sku": "F016258601",
@@ -1433,7 +1439,8 @@
     "stockout_days": 2,
     "calendar_span": 5,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411308233"
   },
   "F016208601": {
     "sku": "F016208601",
@@ -1447,7 +1454,8 @@
     "stockout_days": 2,
     "calendar_span": 2,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6920411308158"
   },
   "CPSPS2605E29GRN21F115": {
     "sku": "CPSPS2605E29GRN21F115",
@@ -1461,6 +1469,7 @@
     "stockout_days": 1,
     "calendar_span": 1,
     "status": "缺货中",
-    "lifecycle": "在售"
+    "lifecycle": "在售",
+    "code": "6979918614026"
   }
 }
