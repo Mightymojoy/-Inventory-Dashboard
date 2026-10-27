@@ -110,14 +110,17 @@ UPCOMING_CODES = {
     "6979918615283": "VANITY 晴蓝4L",
 }
 
-# 停采 / 在售一律以 ERP「分类」字段为唯一依据（2026-10-27 老大确认）：
+# 停采 / 在售主要以 ERP「分类」字段为依据（2026-10-27 老大确认）：
 #   「停采旅行箱」「停采包袋」「停采赠品」「停采其他」… → 停采
 #   「旅行箱」「包袋」「旅行生活」「定制旅行箱」「定制包袋」 → 在售
-# **不再**用「名称带 2026版 / TRUNK」推断新旧版：ERP 分类已明确标注，
-# 推断会与之冲突。实测反例（上一轮误判）：
-#   ITO PISTACHIO STRIPED系列 亮面炭黑28英寸旅行箱  分类=旅行箱、可发 -1 → 在售
-#   ITO PISTACHIO STRIPED系列 亮面烟白28英寸旅行箱  分类=旅行箱、可发 26 → 在售
-#   ITO PISTACHIO STRIPED系列 亮面炭黑30英寸旅行箱  分类=停采旅行箱       → 停采
+# **不用「名称带 2026版 / TRUNK」之类推断新旧版**：名称是前缀关系，
+# 「…20英寸旅行箱」是「…20英寸旅行箱 2026版」的前缀，包含匹配必然误伤新版。
+#
+# 但 ERP 分类会有少量漏标，靠商品编码人工名单补（见下方两张名单）：
+#   亮面炭黑28英寸旅行箱  分类=旅行箱、可发 -1 → ERP 漏标，已入 SUPERSEDED_DISC 判停采
+#   亮面烟白28英寸旅行箱  分类=旅行箱、可发 26 → ERP 漏标，已入 SUPERSEDED_DISC 判停采
+#   （同系列 20/24 英寸旧版 ERP 已标「停采旅行箱」，无需入名单）
+# 原则：**ERP 优先，名单只补漏，名单一律按编码锁定**。
 
 # 年度限定色停采名单（人工确认，2026-10-27 老大指定）：
 #   气泡粉 / 波子绿 / 苏打橙 是「每年的限定色」，售完即止、不再补货，属停采。
@@ -142,6 +145,31 @@ LIMITED_COLOR_DISC = {
 }
 LIMITED_COLOR_WHY = "年度限定色（气泡粉/波子绿/苏打橙），售完即止不补货"
 
+# 旧版淘汰名单（人工确认，2026-10-27 老大指定）：
+#   ITO PISTACHIO STRIPED 系列 亮面炭黑 / 亮面烟白 的 20、24、28 英寸旅行箱属旧版，
+#   已被「2026版」（20/24/28 英寸）与「TRUNK」（26/30 英寸）新款替代，旧版即停采。
+#
+#   为什么只收 2 个编码：老大点名的 6 个里，20 与 24 英寸的旧版**ERP 分类已是
+#   「停采旅行箱」**，本来就判停采；真正漏标的只有 28 英寸这两个
+#   （ERP 分类仍是「旅行箱」，一个可发 -1、一个可发 26）。
+#
+#   **绝对不能改成名称关键字规则。** 「亮面炭黑20英寸旅行箱」是
+#   「…旅行箱 2026版」的前缀，用包含匹配会把在售的新版一并打成停采，实测会误伤：
+#       亮面炭黑20英寸旅行箱 2026版  可发  93
+#       亮面炭黑24英寸旅行箱 2026版  可发 100
+#       亮面炭黑28英寸旅行箱 2026版  可发  59
+#       亮面烟白20英寸旅行箱 2026版  可发 113
+#       亮面烟白24英寸旅行箱 2026版  可发  52
+#       亮面烟白28英寸旅行箱 2026版  可发 117
+#   同系列还有「FIND ITO」（未上市）与带客户名的定制款（定制），名称同样含这段前缀，
+#   一并会被误判。所以这里一律按商品编码精确锁定。
+# 维护：旧版清完库存后可保留（不影响统计）；若 ERP 后续把这些编码改回在售，需先删条目。
+SUPERSEDED_DISC = {
+    "6920411302767": "PISTACHIO STRIPED 亮面炭黑28英寸旅行箱（旧版）",
+    "6920411304488": "PISTACHIO STRIPED 亮面烟白28英寸旅行箱（旧版）",
+}
+SUPERSEDED_WHY = "旧版（已被 2026版/TRUNK 新款替代），清库存不补货"
+
 
 def detect_lifecycle(name, cat, code=""):
     """判定商品生命周期，返回 (lifecycle, reason)。
@@ -151,11 +179,12 @@ def detect_lifecycle(name, cat, code=""):
       2. 定制     —— 按需定制分类，可发=0 属正常，不参与缺货/预警
       3. 分类停采 —— 分类本身以「停采」开头（ERP 唯一依据）
       4. 限定色停采 —— 命中 LIMITED_COLOR_DISC 商品编码（人工名单，仅行李箱）
-      5. 在售
+      5. 旧版淘汰 —— 命中 SUPERSEDED_DISC 商品编码（人工名单，ERP 漏标分类的旧版尾货）
+      6. 在售
 
-    停采与在售只看 ERP「分类」字段，不做名称推断（2026-10-27 老大确认）。
+    停采与在售以 ERP「分类」字段为主依据，不做名称推断（2026-10-27 老大确认）；
+    4、5 两级只补 ERP 未标注的那一小部分，且**只用商品编码**，不用名称关键字。
     定制必须排在分类停采之前：定制款可发=0 是 B 端订单常态，不是缺货。
-    限定色排在分类停采之后：ERP 已明确停采的直接采信，名单只补 ERP 未标注的部分。
     """
     upper = (name or "").upper()
     if UPCOMING_MARK in upper:
@@ -171,6 +200,8 @@ def detect_lifecycle(name, cat, code=""):
         return LIFE_DISCONTINUED, "分类为停采"
     if code and str(code).strip() in LIMITED_COLOR_DISC:
         return LIFE_DISCONTINUED, LIMITED_COLOR_WHY
+    if code and str(code).strip() in SUPERSEDED_DISC:
+        return LIFE_DISCONTINUED, "%s（%s）" % (SUPERSEDED_WHY, SUPERSEDED_DISC[str(code).strip()])
     return LIFE_ON_SALE, ""
 
 # ---------------- 工具 ----------------
@@ -753,7 +784,7 @@ def compute(path=XLSX_PATH):
     ]
 
     result = {
-        "version": "0.13.1",
+        "version": "0.13.2",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,

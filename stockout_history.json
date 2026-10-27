@@ -1394,8 +1394,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 14,
     "calendar_span": 13,
-    "status": "缺货中",
-    "lifecycle": "在售",
+    "status": "已停采",
+    "lifecycle": "停采",
     "code": "6920411302767"
   },
   "CP2ST2512S26GRN04G115": {
