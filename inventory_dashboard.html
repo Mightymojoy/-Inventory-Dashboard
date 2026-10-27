@@ -514,7 +514,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* ===== 渲染 ===== */
   function render(){
-    document.getElementById('ver').textContent='v'+(DATA.version||'0.13');
+    document.getElementById('ver').textContent='v'+(DATA.version||'0.13.1');
     var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
     document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
     var srcBtn=document.getElementById('srcBtn');
