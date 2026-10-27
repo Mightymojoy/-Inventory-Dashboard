@@ -95,7 +95,13 @@ def build_message(data):
             line = f"- {short_name(s)}：可发 {int(s['kf'])}，在途 {int(s.get('in_transit') or 0)}"
             if s.get("arrival_qty"):
                 eta = (s.get("arrival_eta") or "")[5:].replace("-", "/")
-                line += f"，预计到货 {eta}({int(s['arrival_qty'])})"
+                qty = int(s["arrival_qty"])
+                nbat = len(s.get("arrival_batches") or [])
+                # 首到日 + 起N批共X；单批不写「起1批」（与看板单批不显示批数标签一致）
+                if nbat >= 2:
+                    line += f"，预计到货 {eta}起{nbat}批共{qty}"
+                else:
+                    line += f"，预计到货 {eta}共{qty}"
             out.append(line)
 
     # ===== 2. 急需关注（周转<7天，仅有效周转：可发>0 的 SKU，避免与缺货模块重复）=====
