@@ -59,7 +59,68 @@ LEVEL_COLOR = {
     "安全": "#3a9d6e",
     "滞销": "#7a8794",
     "定制": "#9aa7b0",
+    "停采": "#8b8f96",      # 生命周期：停采（灰，且永不进健康度环图）
+    "未上市": "#5b7fa6",    # 生命周期：未上市（蓝灰）
 }
+
+# ---------------- 生命周期（2026-10-27 新增）----------------
+# level 与 lifecycle 是**两个正交维度**：
+#   level     = 库存健康度（够不够卖）：缺货/急需关注/缺货风险/安全/滞销/定制
+#   lifecycle = 商品生命周期（还在不在卖）：在售/停采/未上市/定制
+# 「缺货」只在 lifecycle=在售 时成立 —— 停采不会补货、未上市本来没货，
+# 两者都不该占用「缺货」这个需要人行动的指标（2026-10-27 方案A：彻底剔除）。
+LIFE_ON_SALE = "在售"
+LIFE_DISCONTINUED = "停采"
+LIFE_UPCOMING = "未上市"
+LIFE_CUSTOM = "定制"
+LIFE_ORDER = [LIFE_ON_SALE, LIFE_DISCONTINUED, LIFE_UPCOMING, LIFE_CUSTOM]
+
+# 未上市标记：ERP 已建档案、尚未上架的商品，货品名称带此标记、可发恒为 0
+UPCOMING_MARK = "FIND ITO"
+
+# 未上市补充名单（人工确认，2026-10-27 老大指定）：
+#   有些商品 ERP 分类仍是「包袋」、名称也不带 FIND ITO，但实际尚未上市
+#   （同系列其他颜色均有货，仅此色可发恒为 0）。
+# (名称关键片段, 判定说明) —— 片段取「系列 + 颜色 + 容量」，能唯一定位到单个 SKU。
+# 维护：该色上市后请删除对应条目，否则会一直显示「未上市」。
+UPCOMING_EXTRA = (
+    ("MYCENA TOTE系列 CORDURA芽绿16L包袋",
+     "同系列其他颜色均已上架，此色未上市（2026-10-27 人工确认）"),
+)
+
+# 停采 / 在售一律以 ERP「分类」字段为唯一依据（2026-10-27 老大确认）：
+#   「停采旅行箱」「停采包袋」「停采赠品」「停采其他」… → 停采
+#   「旅行箱」「包袋」「旅行生活」「定制旅行箱」「定制包袋」 → 在售
+# **不再**用「名称带 2026版 / TRUNK」推断新旧版：ERP 分类已明确标注，
+# 推断会与之冲突。实测反例（上一轮误判）：
+#   ITO PISTACHIO STRIPED系列 亮面炭黑28英寸旅行箱  分类=旅行箱、可发 -1 → 在售
+#   ITO PISTACHIO STRIPED系列 亮面烟白28英寸旅行箱  分类=旅行箱、可发 26 → 在售
+#   ITO PISTACHIO STRIPED系列 亮面炭黑30英寸旅行箱  分类=停采旅行箱       → 停采
+
+
+def detect_lifecycle(name, cat):
+    """判定商品生命周期，返回 (lifecycle, reason)。
+
+    优先级（顺序不可换）：
+      1. 未上市   —— 名称含 FIND ITO，或命中 UPCOMING_EXTRA 人工名单
+      2. 定制     —— 按需定制分类，可发=0 属正常，不参与缺货/预警
+      3. 分类停采 —— 分类本身以「停采」开头（ERP 唯一依据）
+      4. 在售
+
+    停采与在售只看 ERP「分类」字段，不做名称推断（2026-10-27 老大确认）。
+    定制必须排在分类停采之前：定制款可发=0 是 B 端订单常态，不是缺货。
+    """
+    upper = (name or "").upper()
+    if UPCOMING_MARK in upper:
+        return LIFE_UPCOMING, "名称含 %s（尚未上架）" % UPCOMING_MARK
+    for frag, why in UPCOMING_EXTRA:
+        if frag in (name or ""):
+            return LIFE_UPCOMING, why
+    if cat in MADE_TO_ORDER:
+        return LIFE_CUSTOM, "定制分类"
+    if str(cat or "").startswith("停采"):
+        return LIFE_DISCONTINUED, "分类为停采"
+    return LIFE_ON_SALE, ""
 
 # ---------------- 工具 ----------------
 def num(x):
@@ -334,10 +395,22 @@ def compute(path=XLSX_PATH):
         else:
             daily = 0.0
 
-        if cat in MADE_TO_ORDER:
+        lifecycle, life_reason = detect_lifecycle(name, cat)
+
+        if lifecycle == LIFE_CUSTOM:
             level = "定制"
             turnover = None
             sellout = None
+        elif lifecycle in (LIFE_DISCONTINUED, LIFE_UPCOMING):
+            # 停采 / 未上市：**不参与缺货与预警判定**（2026-10-27 方案A）
+            # 但仍算周转/售罄，供清货参考；level 固定为生命周期，不进健康度环图
+            level = lifecycle
+            if daily > 0:
+                turnover = max(kf, 0.0) / daily
+                sellout = TODAY + datetime.timedelta(days=int(math.ceil(turnover)))
+            else:
+                turnover = None
+                sellout = None
         elif kf <= 0:
             level = "缺货"
             turnover = 0.0
@@ -404,6 +477,8 @@ def compute(path=XLSX_PATH):
             "sellout": (sellout.isoformat() if sellout else None),
             "value": round(value_retail, 1),
             "level": level,
+            "lifecycle": lifecycle,            # 生命周期：在售/停采/未上市/定制（2026-10-27）
+            "lifecycle_reason": life_reason,   # 判定依据，便于核对口径
             "arrival_qty": 0,      # 后续由提货计划表填充
             "arrival_eta": None,   # 后续填充
         })
@@ -437,14 +512,21 @@ def compute(path=XLSX_PATH):
             "cat": cat or "",
             "series": parse_series(name),
             "price": price,
+            "kf": num(r[f_kf]) if f_kf is not None else 0,   # 可发库存（商品总览新增列，2026-09-04）
         }
         if cat in CATALOG_CATS:
-            item["status"] = "在售" if cat in ON_SALE else ("定制" if cat in MADE_TO_ORDER else "停采")
+            # 走统一生命周期判定（2026-10-27）。
+            # 原写法 `"在售" if cat in ON_SALE else ("定制" if cat in MADE_TO_ORDER else "停采")`
+            # 里 ON_SALE 已包含 MADE_TO_ORDER，导致「定制」分支永远不可达（死代码），一并修正。
+            life_c, _lr = detect_lifecycle(name, cat)
+            item["status"] = life_c
+            item["lifecycle"] = life_c
             catalog.append(item)
         elif cat in ACCESSORY_CATS:
             item["kf"] = num(r[f_kf]) if f_kf is not None else 0
             item["stock"] = num(r[f_stock]) if f_stock is not None else 0
             item["status"] = "停采" if str(cat).startswith("停采") else ""
+            item["lifecycle"] = item["status"] or LIFE_ON_SALE
             accessories.append(item)
 
     # ===== 2. 到货进度 =====
@@ -514,9 +596,32 @@ def compute(path=XLSX_PATH):
         print("[info] 未检测到到货进度数据（入库明细同步 / 供应链提货计划表），到货日历不可用", file=sys.stderr)
 
     # ===== 3. 汇总指标 =====
+    # 生命周期计数（2026-10-27）：缺货 / 预警只可能由「在售」产生
+    life_cnt = {lv: 0 for lv in LIFE_ORDER}
+    for s in skus:
+        life_cnt[s["lifecycle"]] = life_cnt.get(s["lifecycle"], 0) + 1
+
+    # 停采口径修正（2026-10-27）：ERP 把停采商品单独归入「停采旅行箱」「停采包袋」
+    # 分类，这些分类本就不进在售池 skus，故 life_cnt[停采] 恒为 0。
+    # 若 KPI 直接用它，页面会显示「停采 0」，与事实（785 个）矛盾。
+    # 因此改从全量目录 catalog（含停采分类）统计，并补两个清货参考字段。
+    _dc = [c for c in catalog if c.get("lifecycle") == LIFE_DISCONTINUED]
+    _dc_kf = round(sum(float(c.get("kf") or 0) for c in _dc), 1)
+    _dc_has = sum(1 for c in _dc if float(c.get("kf") or 0) > 0)
+
     kpi = {
-        "on_sale_sku": len(skus),
-        "custom_sku": sum(1 for s in skus if s["level"] == "定制"),
+        # on_sale_sku 口径变更（2026-10-27）：
+        #   原 = 池内全部（把未上市/停采也当在售）；现 = 真正在售（在售 + 定制）
+        "on_sale_sku": life_cnt[LIFE_ON_SALE] + life_cnt[LIFE_CUSTOM],
+        "pool_sku": len(skus),                              # 池内总数（新增）
+        "stocked_sku": life_cnt[LIFE_ON_SALE],              # 在售·备货类（新增）
+        "custom_sku": life_cnt[LIFE_CUSTOM],
+        # 停采：全量目录口径（含停采旅行箱/停采包袋），不参与缺货判定
+        "discontinued_sku": len(_dc),
+        "discontinued_kf": _dc_kf,                          # 停采商品可发合计（清货参考）
+        "discontinued_has_stock": _dc_has,                  # 停采但仍有货的 SKU 数
+        "upcoming_sku": life_cnt[LIFE_UPCOMING],            # 未上市（新增）
+        # 合计口径保持全量（停采品的货仍在仓、货值真实），各生命周期分解见 lifecycle 块
         "total_kf": round(sum(s["kf"] for s in skus), 1),
         "total_value": round(sum(s["value"] for s in skus), 1),
         "out_of_stock": sum(1 for s in skus if s["level"] == "缺货"),
@@ -524,6 +629,34 @@ def compute(path=XLSX_PATH):
         "in_transit": round(sum(s["in_transit"] for s in skus), 1),
         "arrival_week": round(future_week_total, 1),
     }
+
+    # 生命周期分解（SKU 数 / 可发 / 货值 / 缺货 / 预警）
+    lifecycle = {}
+    for lv in LIFE_ORDER:
+        lifecycle[lv] = {"sku": 0, "kf": 0.0, "value": 0.0, "oos": 0, "warn": 0}
+    for s in skus:
+        g = lifecycle.setdefault(s["lifecycle"],
+                                 {"sku": 0, "kf": 0.0, "value": 0.0, "oos": 0, "warn": 0})
+        g["sku"] += 1
+        g["kf"] += s["kf"]
+        g["value"] += s["value"]
+        if s["level"] == "缺货":
+            g["oos"] += 1
+        if s["level"] in ("急需关注", "缺货风险"):
+            g["warn"] += 1
+    for lv in lifecycle:
+        lifecycle[lv]["kf"] = round(lifecycle[lv]["kf"], 1)
+        lifecycle[lv]["value"] = round(lifecycle[lv]["value"], 1)
+
+    # 停采项在 skus 内恒为 0（ERP 已单列为停采分类，不进在售池），
+    # 用 catalog 补齐规模，使 lifecycle 块与 kpi.discontinued_sku 口径一致。
+    # oos/warn 恒 0：停采商品不参与缺货与预警判定。
+    lifecycle[LIFE_DISCONTINUED]["sku"] = len(_dc)
+    lifecycle[LIFE_DISCONTINUED]["kf"] = _dc_kf
+    lifecycle[LIFE_DISCONTINUED]["value"] = round(
+        sum(float(c.get("price") or 0) * float(c.get("kf") or 0) for c in _dc), 1)
+    lifecycle[LIFE_DISCONTINUED]["has_stock"] = _dc_has
+    lifecycle[LIFE_DISCONTINUED]["source"] = "catalog（停采分类，不进在售池）"
 
     health = {lv: {"count": 0, "value": 0.0} for lv in LEVEL_ORDER}
     for s in skus:
@@ -533,13 +666,25 @@ def compute(path=XLSX_PATH):
 
     categories = {}
     for s in skus:
-        c = categories.setdefault(s["cat"], {"sku": 0, "value": 0.0, "oos": 0, "warn": 0})
+        c = categories.setdefault(s["cat"], {"sku": 0, "value": 0.0, "oos": 0, "warn": 0,
+                                             "on_sale": 0, "discontinued": 0, "upcoming": 0,
+                                             "custom": 0})
         c["sku"] += 1
         c["value"] += s["value"]
         if s["level"] == "缺货":
             c["oos"] += 1
         if s["level"] in ("急需关注", "缺货风险"):
             c["warn"] += 1
+        # 按生命周期分解（2026-10-27）
+        lc = s["lifecycle"]
+        if lc == LIFE_ON_SALE:
+            c["on_sale"] += 1
+        elif lc == LIFE_DISCONTINUED:
+            c["discontinued"] += 1
+        elif lc == LIFE_UPCOMING:
+            c["upcoming"] += 1
+        elif lc == LIFE_CUSTOM:
+            c["custom"] += 1
 
     # 到货按日期排序
     arrival_timeline = [
@@ -549,7 +694,7 @@ def compute(path=XLSX_PATH):
     ]
 
     result = {
-        "version": "0.12",
+        "version": "0.13",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
@@ -564,8 +709,23 @@ def compute(path=XLSX_PATH):
             "overstock_days": OVERSTOCK_DAYS,
             "level_order": LEVEL_ORDER,
             "level_color": LEVEL_COLOR,
+            # 生命周期（2026-10-27）
+            "life_order": LIFE_ORDER,
+            "life_color": {
+                LIFE_ON_SALE: "#3a9d6e",
+                LIFE_DISCONTINUED: "#8b8f96",
+                LIFE_UPCOMING: "#5b7fa6",
+                LIFE_CUSTOM: "#9aa7b0",
+            },
+            "life_rules": {
+                "upcoming_mark": UPCOMING_MARK,
+                "upcoming_extra": [{"frag": f, "why": w} for f, w in UPCOMING_EXTRA],
+                "discontinued_prefix": "停采",
+                "basis": "ERP 分类字段：停采* → 停采，其余在售分类 → 在售",
+            },
         },
         "kpi": kpi,
+        "lifecycle": lifecycle,
         "health": health,
         "categories": categories,
         "arrival_timeline": arrival_timeline,
@@ -589,7 +749,9 @@ def _day_diff(d1, d2):
 
 def update_stockout_history(skus, today=None):
     """增量更新缺货历史档案 stockout_history.json（与看板刷新同频）。
-    口径：level=='缺货'（可售库存=0 或为负，定制/停采不计）。
+    口径（2026-10-27 起）：level=='缺货' **且** lifecycle=='在售'。
+    停采（不会补货）、未上市（本来没货）都不再计入缺货，历史挂账按生命周期
+    定性为「已停采」/「已下市」，记录保留以便追溯，不删除。
     - 本次缺货：
       连续缺货（状态=缺货中）→ 末次=今天、累计天数+=日差（同一天重复 build 不叠加）、跨度=首→今+1
       已恢复后再次缺货 → 保留首次缺货日与累计天数，状态回缺货中，天数继续累加
@@ -606,7 +768,8 @@ def update_stockout_history(skus, today=None):
             hist = {}
     if today is None:
         today = datetime.date.today().isoformat()
-    cur = {s["sku"]: s for s in skus if s.get("level") == "缺货"}
+    cur = {s["sku"]: s for s in skus
+           if s.get("level") == "缺货" and s.get("lifecycle") == LIFE_ON_SALE}
     # 1) 本次缺货 SKU：连续缺货累加 / 重新缺货续记 / 全新建档
     for sku, s in cur.items():
         if sku in hist and hist[sku].get("status") == "缺货中":
@@ -629,21 +792,34 @@ def update_stockout_history(skus, today=None):
                 "size": s.get("size", ""), "name": s.get("name", ""),
                 "first_stockout": today, "last_stockout": today,
                 "stockout_days": 1, "calendar_span": 1, "status": "缺货中",
+                "lifecycle": s.get("lifecycle", LIFE_ON_SALE),
             }
-    # 2) 历史缺货中但本次不缺货 → 已恢复（天数/跨度冻结）
+    # 2) 历史缺货中但本次不缺货 → 按生命周期定性（天数/跨度冻结，记录不删除以便追溯）
+    #    2026-10-27 方案A：停采/未上市不再计入缺货，历史挂账标「已停采」/「已下市」
     for sku in list(hist.keys()):
-        if hist[sku].get("status") == "缺货中" and sku not in cur:
-            hist[sku]["status"] = "已恢复"
+        if hist[sku].get("status") != "缺货中" or sku in cur:
+            continue
+        rec = hist[sku]
+        lc, _rs = detect_lifecycle(rec.get("name", ""), rec.get("cat", ""))
+        rec["lifecycle"] = lc
+        if lc == LIFE_UPCOMING:
+            rec["status"] = "已下市"
+        elif lc == LIFE_DISCONTINUED:
+            rec["status"] = "已停采"
+        else:
+            rec["status"] = "已恢复"
     # 3) 同步最新名称信息（品类/系列/颜色/尺寸/名称随数据源更新）
     for sku, s in cur.items():
         if sku in hist:
-            for k in ("cat", "series", "color", "size", "name"):
+            for k in ("cat", "series", "color", "size", "name", "lifecycle"):
                 if s.get(k):
                     hist[sku][k] = s[k]
     with open(hist_path, "w", encoding="utf-8") as f:
         json.dump(hist, f, ensure_ascii=False, indent=2)
     n_act = sum(1 for r in hist.values() if r["status"] == "缺货中")
-    print(f"[ok] 缺货历史已更新: 缺货中 {n_act} / 累计记录 {len(hist)}")
+    n_off = sum(1 for r in hist.values() if r["status"] == "已停采")
+    n_gone = sum(1 for r in hist.values() if r["status"] == "已下市")
+    print(f"[ok] 缺货历史已更新: 缺货中 {n_act} ｜ 已停采 {n_off} ｜ 已下市 {n_gone} ｜ 累计 {len(hist)}")
     return hist
 
 

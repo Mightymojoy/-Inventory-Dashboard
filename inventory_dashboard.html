@@ -178,6 +178,14 @@
     <div class="card">
       <div class="cat-filter">
         <div class="filter-item">
+          <label>生命周期</label>
+          <select id="alertLife"><option value="在售">在售商品</option>
+            <option value="停采">停采商品</option>
+            <option value="未上市">未上市商品</option>
+            <option value="__all__">全部</option>
+          </select>
+        </div>
+        <div class="filter-item">
           <label>状态</label>
           <select id="alertLevel"><option value="__all__">全部</option>
             <option value="缺货">缺货</option>
@@ -196,7 +204,7 @@
         <div class="filter-meta"><span class="badge" id="alertCount"></span></div>
       </div>
       <div style="overflow-x:auto;margin-top:14px"><table id="alertTable"><thead><tr>
-        <th data-k="level">状态</th><th data-k="cat">分类</th><th data-k="name">商品名称</th>
+        <th data-k="lifecycle">生命周期</th><th data-k="level">状态</th><th data-k="cat">分类</th><th data-k="name">商品名称</th>
         <th data-k="kf" class="num">可发</th><th data-k="turnover" class="num">周转(天)</th>
         <th data-k="sellout">预计售罄</th><th data-k="in_transit" class="num">在途</th>
         <th data-k="arrival_qty" class="num">未来到货</th><th data-k="arrival_eta">到货日期</th>
@@ -303,6 +311,15 @@
     <div class="card">
       <div class="cat-filter">
         <div class="filter-item">
+          <label>生命周期</label>
+          <select id="catalogLife"><option value="__all__">全部</option>
+            <option value="在售">在售</option>
+            <option value="停采">停采</option>
+            <option value="未上市">未上市</option>
+            <option value="定制">定制</option>
+          </select>
+        </div>
+        <div class="filter-item">
           <label>品类</label>
           <select id="catalogCat"><option value="__all__">全部</option></select>
         </div>
@@ -319,8 +336,9 @@
       <div style="overflow-x:auto;margin-top:14px"><table id="catalogTable"><thead><tr>
         <th data-k="code">商品编码</th><th data-k="sku">货品编号</th>
         <th data-k="name">商品名称</th><th data-k="short">货品简称</th>
-        <th data-k="cat">分类</th><th data-k="series">系列</th>
+        <th data-k="cat">分类</th><th data-k="lifecycle">生命周期</th><th data-k="series">系列</th>
         <th data-k="price" class="num">零售价</th>
+        <th data-k="kf" class="num">可发库存</th>
       </tr></thead><tbody></tbody></table></div>
     </div>
   </section>
@@ -355,6 +373,10 @@
     <div class="card">
       <div class="cat-filter">
         <div class="filter-item">
+          <label>生命周期</label>
+          <select id="soLife"><option value="__all__">全部</option></select>
+        </div>
+        <div class="filter-item">
           <label>品类</label>
           <select id="soCat"><option value="__all__">全部</option></select>
         </div>
@@ -373,6 +395,7 @@
         <div class="filter-meta"><span class="badge" id="soCount"></span><span class="badge" id="soStat" style="background:#e8893b"></span></div>
       </div>
       <div style="overflow-x:auto;margin-top:14px"><table id="soTable"><thead><tr>
+        <th data-k="lifecycle">生命周期</th>
         <th data-k="series" class="name">系列</th><th data-k="color">颜色</th><th data-k="size">尺寸</th>
         <th data-k="first">首次缺货</th><th data-k="last">末次缺货</th>
         <th data-k="days" class="num">累计缺货天数</th><th data-k="span" class="num">日历跨度</th>
@@ -466,6 +489,13 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   function money(n){if(n==null)return '-';return '¥'+Math.round(n).toLocaleString('zh-CN');}
   function levelColor(l){return (CFG.level_color&&CFG.level_color[l])||'#999';}
   function pill(l){return '<span class="pill" style="background:'+levelColor(l)+'">'+l+'</span>';}
+  /* 生命周期专用标签色（2026-10-27）：level_color 里没有「在售」等生命周期取值，
+     用 config.life_color 取色，避免全部退化成灰色 #999 */
+  function pillLife(l){
+    l=l||'在售';
+    var c=(CFG.life_color&&CFG.life_color[l])||'#8b8f96';
+    return '<span class="pill" style="background:'+c+'">'+l+'</span>';
+  }
 
   /* ===== 加载 ===== */
   function load(){
@@ -484,7 +514,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* ===== 渲染 ===== */
   function render(){
-    document.getElementById('ver').textContent='v'+(DATA.version||'0.12');
+    document.getElementById('ver').textContent='v'+(DATA.version||'0.13');
     var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
     document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
     var srcBtn=document.getElementById('srcBtn');
@@ -492,17 +522,20 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     else srcBtn.textContent='数据源：'+(LIVE?'实时':'快照');
     renderKPI();renderDonutMini();renderCatMini();renderHealth();
     renderAlert();renderSlow();renderArrival();renderCat();renderCatalog();renderAccessory();renderStockout();renderSettings();
-    document.getElementById('ovSub').textContent='在售 '+DATA.kpi.on_sale_sku+' SKU（含定制 '+DATA.kpi.custom_sku+'）';
+    document.getElementById('ovSub').textContent='在售 '+DATA.kpi.stocked_sku+' SKU · 定制 '+DATA.kpi.custom_sku
+      +' · 停采 '+DATA.kpi.discontinued_sku+' · 未上市 '+DATA.kpi.upcoming_sku;
   }
 
   function renderKPI(){
     var k=DATA.kpi;
     var cards=[
-      {ic:'box',v:k.on_sale_sku,l:'在售 SKU',s:'含定制 '+k.custom_sku},
-      {ic:'layers',v:fmt(k.total_kf),l:'总可发库存',s:'件'},
+      {ic:'box',v:k.on_sale_sku,l:'在售 SKU',s:'在售 '+k.stocked_sku+' · 定制 '+k.custom_sku},
+      {ic:'layers',v:fmt(k.total_kf),l:'总可发库存',s:'件（在售+定制）'},
       {ic:'store',v:money(k.total_value),l:'库存货值(零售)',s:'可发×零售价'},
-      {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'备货类可发=0',cls:'alert'},
+      {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'仅计在售商品',cls:'alert'},
       {ic:'alert',v:k.warning,l:'预警 SKU',s:'急需+风险',cls:'warn'},
+      {ic:'layers',v:k.discontinued_sku,l:'停采 SKU',s:'ERP停采分类·'+(k.discontinued_has_stock||0)+'个仍有货',cls:'off'},
+      {ic:'layers',v:k.upcoming_sku,l:'未上市 SKU',s:'FIND ITO+人工名单，不计缺货',cls:'off'},
       {ic:'truck',v:fmt(k.in_transit),l:'在途总量',s:'采+产+调拨'},
       {ic:'truck',v:fmt(k.arrival_week),l:'未来一周到货',s:'提货计划'},
       {ic:'box',v:k.custom_sku,l:'定制(按需)SKU',s:'可发=0 属正常'}
@@ -522,8 +555,12 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   function renderDonutMini(){
     var h=DATA.health,order=CFG.level_order||[];
     var seg=order.map(function(l){return {label:l,count:h[l].count,color:levelColor(l)};});
-    var html='<div class="donut-wrap"><div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+DATA.kpi.on_sale_sku+'</b><span>在售SKU</span></div></div><div class="legend">';
+    /* 中心数改用「在售商品数」：health 只统计 5 个健康等级，不含定制；
+       否则中心 337 与分段之和 233 对不上（2026-10-27 修正口径） */
+    var base=(DATA.kpi.stocked_sku!=null)?DATA.kpi.stocked_sku:DATA.kpi.on_sale_sku;
+    var html='<div class="donut-wrap"><div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+base+'</b><span>在售SKU</span></div></div><div class="legend">';
     seg.forEach(function(s){html+='<div class="row"><span class="dot" style="background:'+s.color+'"></span><span class="nm">'+s.label+'</span><span class="ct">'+s.count+'</span><span class="vl">'+money(h[s.label].value)+'</span></div>';});
+    if(DATA.kpi.custom_sku) html+='<div class="row"><span class="dot" style="background:'+levelColor('定制')+'"></span><span class="nm">定制(按需)</span><span class="ct">'+DATA.kpi.custom_sku+'</span><span class="vl">-</span></div>';
     html+='</div></div>';
     document.getElementById('donutMini').innerHTML=html;
   }
@@ -531,12 +568,14 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   function renderHealth(){
     var h=DATA.health,order=CFG.level_order||[];
     var seg=order.map(function(l){return {label:l,count:h[l].count,color:levelColor(l)};});
-    var html='<div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+DATA.kpi.on_sale_sku+'</b><span>在售SKU</span></div></div>';
+    var base=(DATA.kpi.stocked_sku!=null)?DATA.kpi.stocked_sku:DATA.kpi.on_sale_sku;
+    var html='<div class="donut" style="background:'+donut(seg)+'"><div class="ctr"><b>'+base+'</b><span>在售SKU</span></div></div>';
     html+='<div class="legend">';
     seg.forEach(function(s){
-      var pct=DATA.kpi.on_sale_sku?(s.count/DATA.kpi.on_sale_sku*100).toFixed(1):0;
+      var pct=base?(s.count/base*100).toFixed(1):0;
       html+='<div class="row"><span class="dot" style="background:'+s.color+'"></span><span class="nm">'+s.label+'</span><span class="ct">'+s.count+' 个</span><span class="vl">'+pct+'% · '+money(h[s.label].value)+'</span></div>';
     });
+    if(DATA.kpi.custom_sku) html+='<div class="row"><span class="dot" style="background:'+levelColor('定制')+'"></span><span class="nm">定制(按需)</span><span class="ct">'+DATA.kpi.custom_sku+' 个</span><span class="vl">可发=0 属正常</span></div>';
     html+='</div>';
     document.getElementById('donutBig').innerHTML=html;
   }
@@ -574,15 +613,22 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
   function updateCount(tableId){var tb=document.getElementById(tableId);var n=(tb.querySelector('tbody')._rows||[]).length;var badge=tb.id.replace('Table','Count');var el=document.getElementById(badge);if(el)el.textContent=n+' 条';}
 
   function renderAlert(){
-    var baseRows=DATA.skus.filter(function(s){return ['缺货','急需关注','缺货风险'].indexOf(s.level)>=0;});
+    /* 2026-10-27：生命周期与库存状态分开筛。
+       「缺货」只由在售产生 —— 停采不会补货、未上市本来没货，默认视图只显示在售商品。 */
+    var baseRows=DATA.skus.filter(function(s){
+      return ['缺货','急需关注','缺货风险','停采','未上市'].indexOf(s.level)>=0;
+    });
     var cats=Array.from(new Set(baseRows.map(function(s){return s.cat;}))).sort();
     var selCat=document.getElementById('alertCat');
     selCat.innerHTML='<option value="__all__">全部</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    var selLife=document.getElementById('alertLife');
     function render(){
+      var life=selLife.value;
       var lv=document.getElementById('alertLevel').value;
       var ct=selCat.value;
       var q=(document.getElementById('alertSearch').value||'').trim().toLowerCase();
       var rows=baseRows.filter(function(s){
+        if(life!=='__all__' && s.lifecycle!==life) return false;
         if(lv!=='__all__' && s.level!==lv) return false;
         if(ct!=='__all__' && s.cat!==ct) return false;
         if(q && !((s.name||'').toLowerCase().indexOf(q)>=0) && !((''+s.code).toLowerCase().indexOf(q)>=0)) return false;
@@ -590,6 +636,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       });
       rows.forEach(function(r){r._id=r.code;r._click=true;});
       var cols=[
+        {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||'在售');}},
         {k:'level',f:function(r){return pill(r.level);}},
         {k:'cat'},{k:'name',cls:'name'},
         {k:'kf',cls:'num',f:function(r){return r.kf;}},
@@ -602,11 +649,25 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       buildTable('alertTable',rows,cols,'kf');
       document.getElementById('alertCount').textContent=rows.length+' 条';
       var tag=[];
+      if(life!=='在售') tag.push('生命周期·'+life);   /* 「在售」是默认视图，不作为筛选标签，避免挤掉口径说明 */
       if(lv!=='__all__') tag.push('状态·'+lv);
       if(ct!=='__all__') tag.push(ct);
-      document.getElementById('alertSub').textContent=tag.length?'当前：'+tag.join(' / '):'缺货'+DATA.kpi.out_of_stock+' · 预警'+DATA.kpi.warning+'（全部）';
+      var k=DATA.kpi;
+      /* 停采视图为空时的说明（2026-10-27）：ERP 已把停采商品单列为「停采旅行箱 / 停采包袋」
+         分类，它们根本不进在售池，所以本视图必然为空 —— 不解释会让人以为数据丢了。 */
+      if(rows.length===0 && life==='停采'){
+        document.getElementById('alertSub').textContent=
+          '停采商品已由 ERP 单列为「停采旅行箱 / 停采包袋」分类，不进在售池，故本视图为空；'
+          +'全量目录中停采 '+k.discontinued_sku+' 个（'+k.discontinued_has_stock+' 个仍有货），'
+          +'请在「商品总览」把生命周期选为「停采」查看';
+        return;
+      }
+      var base='缺货 '+k.out_of_stock+' · 预警 '+k.warning
+        +'（仅在售商品；停采 '+k.discontinued_sku+' · 未上市 '+k.upcoming_sku+' 不计入缺货）';
+      document.getElementById('alertSub').textContent=tag.length?('当前：'+tag.join(' / ')+' ｜ '+base):base;
     }
     document.getElementById('alertLevel').onchange=render;
+    selLife.onchange=render;
     selCat.onchange=render;
     document.getElementById('alertSearch').oninput=render;
     render();
@@ -696,10 +757,12 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   function renderCat(){
     var skus=DATA.skus;
-    /* 状态可选值：常规 5 级 + 定制 */
+    /* 状态可选值：常规 5 级 + 生命周期（定制/停采/未上市） */
     var statusOptions=['缺货','急需关注','缺货风险','安全','滞销'];
     var hasCustom=skus.some(function(s){return s.level==='定制';});
     if(hasCustom) statusOptions.push('定制');
+    if(skus.some(function(s){return s.level==='停采';})) statusOptions.push('停采');
+    if(skus.some(function(s){return s.level==='未上市';})) statusOptions.push('未上市');
     makeFilterTable(skus,{
       catId:'catFilter',seriesId:'seriesFilter',statusId:'catStatus',
       searchId:'catSearch',
@@ -725,9 +788,13 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var selCat=document.getElementById(opts.catId);
     var selSer=opts.seriesId?document.getElementById(opts.seriesId):null;
     var selStatus=opts.statusId?document.getElementById(opts.statusId):null;
+    var selLife=opts.lifeId?document.getElementById(opts.lifeId):null;   /* 生命周期筛选（2026-10-27） */
     selCat.innerHTML='<option value="__all__">全部</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
     if(selStatus && opts.statusOptions){
       selStatus.innerHTML='<option value="__all__">全部</option>'+opts.statusOptions.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+    }
+    if(selLife && opts.lifeOptions){
+      selLife.innerHTML='<option value="__all__">全部</option>'+opts.lifeOptions.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
     }
     function updateSeries(){
       if(!selSer) return;
@@ -739,11 +806,13 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     }
     function renderTable(){
       var cat=selCat.value, ser=selSer?selSer.value:'__all__', status=selStatus?selStatus.value:'__all__';
+      var life=selLife?selLife.value:'__all__';
       var q=(document.getElementById(opts.searchId).value||'').trim().toLowerCase();
       var rows=baseRows.filter(function(s){
         if(cat!=='__all__' && s.cat!==cat) return false;
         if(ser!=='__all__' && s.series!==ser) return false;
         if(status!=='__all__' && s.level!==status) return false;
+        if(life!=='__all__' && (s.lifecycle||s.status||'在售')!==life) return false;
         if(q && !((s.name||'').toLowerCase().indexOf(q)>=0)
              && !((''+s.code).toLowerCase().indexOf(q)>=0)
              && !((''+s.sku||'').toLowerCase().indexOf(q)>=0)) return false;
@@ -758,6 +827,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       if(cat!=='__all__') tag.push(cat);
       if(ser!=='__all__') tag.push('系列·'+ser);
       if(status!=='__all__') tag.push('状态·'+status);
+      if(life!=='__all__') tag.push('生命周期·'+life);
       var sub=document.getElementById(opts.subId);
       if(sub) sub.textContent=tag.length?'当前：'+tag.join(' / '):(opts.defaultSub||'');
       if(opts.summary) opts.summary(rows);
@@ -765,6 +835,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     selCat.onchange=function(){updateSeries();renderTable();};
     if(selSer) selSer.onchange=renderTable;
     if(selStatus) selStatus.onchange=renderTable;
+    if(selLife) selLife.onchange=renderTable;
     document.getElementById(opts.searchId).oninput=renderTable;
     updateSeries();renderTable();
   }
@@ -773,13 +844,17 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var rows=DATA.catalog||[];
     makeFilterTable(rows,{
       catId:'catalogCat',seriesId:'catalogSeries',searchId:'catalogSearch',
+      lifeId:'catalogLife', lifeOptions:['在售','停采','未上市','定制'],
       tableId:'catalogTable',countId:'catalogCount',subId:'catalogSub',
       sortBy:'code',
-      defaultSub:'全量正品目录（含停采），按『匹配表（勿删）』口径设计',
+      defaultSub:'全量正品目录（含停采 / 未上市），按『匹配表（勿删）』口径设计',
       cols:[
         {k:'code'},{k:'sku'},
-        {k:'name',cls:'name'},{k:'short'},{k:'cat'},{k:'series'},
-        {k:'price',cls:'num',f:function(r){return r.price>0?money(r.price):'-';}}
+        {k:'name',cls:'name'},{k:'short'},{k:'cat'},
+        {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||r.status||'在售');}},
+        {k:'series'},
+        {k:'price',cls:'num',f:function(r){return r.price>0?money(r.price):'-';}},
+        {k:'kf',cls:'num'}
       ]
     });
   }
@@ -800,7 +875,9 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     });
   }
 
-  /* 缺货明细记录（2026-08-25）：series/color/size、首次/末次、累计天数、日历跨度、状态 */
+  /* 缺货明细记录（2026-08-25）：series/color/size、首次/末次、累计天数、日历跨度、状态
+     2026-10-27：新增「生命周期」列与筛选。停采/未上市不再计入缺货，
+     历史挂账按生命周期定性为「已停采」/「已下市」，记录保留可追溯。 */
   function renderStockout(){
     var hist=DATA.stockout_history||{};
     var rows=Object.keys(hist).map(function(k){
@@ -810,30 +887,36 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         color:r.color, size:r.size, name:r.name,
         first:r.first_stockout, last:r.last_stockout,
         days:r.stockout_days, span:r.calendar_span,
-        level:r.status, status:r.status
+        level:r.status, status:r.status,
+        lifecycle:r.lifecycle||'在售'
       };
     });
+    var SO_COLOR={'缺货中':'#d9534f','已恢复':'#3a9d6e','已停采':'#8b8f96','已下市':'#5b7fa6'};
     makeFilterTable(rows,{
-      catId:'soCat', seriesId:'soSeries', statusId:'soStatus', statusOptions:['缺货中','已恢复'],
+      catId:'soCat', seriesId:'soSeries', statusId:'soStatus',
+      statusOptions:['缺货中','已恢复','已停采','已下市'],
+      lifeId:'soLife', lifeOptions:['在售','停采','未上市'],
       searchId:'soSearch', tableId:'soTable', countId:'soCount', subId:'soSub',
       sortBy:'first',
-      defaultSub:'累计记录 '+rows.length+' 条 · 每次刷新自动增量更新',
+      defaultSub:'累计记录 '+rows.length+' 条 · 每次刷新自动增量更新（仅「在售」计入缺货）',
       cols:[
+        {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||'在售');}},
         {k:'series',cls:'name'},
         {k:'color'},{k:'size'},
         {k:'first'},{k:'last'},
         {k:'days',cls:'num',f:function(r){return r.days+' 天';}},
         {k:'span',cls:'num',f:function(r){return r.span+' 天';}},
         {k:'level',f:function(r){
-          return r.level==='缺货中'
-            ?'<span class="pill" style="background:#d9534f">缺货中</span>'
-            :'<span class="pill" style="background:#3a9d6e">已恢复</span>';
+          var c=SO_COLOR[r.level]||'#8b8f96';
+          return '<span class="pill" style="background:'+c+'">'+r.level+'</span>';
         }}
       ],
       summary:function(rows){
         var act=rows.filter(function(r){return r.level==='缺货中';}).length;
+        var off=rows.filter(function(r){return r.level==='已停采';}).length;
+        var gone=rows.filter(function(r){return r.level==='已下市';}).length;
         var el=document.getElementById('soStat');
-        if(el) el.textContent='缺货中 '+act+' 条';
+        if(el) el.textContent='缺货中 '+act+' 条'+(off?' · 已停采 '+off:'')+(gone?' · 已下市 '+gone:'');
       }
     });
   }
@@ -844,6 +927,15 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     html+='<p><b>数据刷新</b>：Excel 更新后，运行 <code>python build_inventory.py</code>，会自动重新生成 <code>ITO库存看板.html</code> 与 <code>inventory_data.json</code>，覆盖旧文件即完成刷新。</p>';
     html+='<p><b>实时模式（可选）</b>：运行 <code>python build_inventory.py --serve</code>，访问 <code>?live=1</code>，页面打开即实时读 Excel 计算（需常驻本地服务）。</p>';
     html+='<p><b>健康度阈值</b>（周转天数）：急需关注 &lt; '+c.urgent_days+'　缺货风险 &lt; '+c.risk_days+'　安全 ≤ '+c.overstock_days+'　滞销 &gt; '+c.overstock_days+'。可发=0 即缺货（定制类除外）。</p>';
+    /* 生命周期说明（2026-10-27） */
+    var lr=c.life_rules||{};
+    html+='<p><b>生命周期</b>（2026-10-27 新增，与库存健康度<u>正交</u>）：<b>在售</b> / <b>停采</b> / <b>未上市</b> / <b>定制</b>。'
+      +'<b>缺货只统计在售商品</b> —— 停采不会补货、未上市本来没货，二者都不计入缺货与预警。</p>';
+    html+='<p><b>判定规则</b>：① 货品名称含 <code>'+(lr.upcoming_mark||'FIND ITO')+'</code> → <b>未上市</b>；'
+      +'② 定制分类 → <b>定制</b>；'
+      +'③ '+((lr.renewed_series||[]).map(function(x){return x.series+'（'+x.colors.join('/')+'）';}).join('、')||'PISTACHIO STRIPED（炭黑/烟白）')
+      +' 名称带 <code>'+(lr.year_mark||'2026')+'</code>版 或 <code>TRUNK</code> → 新版·在售，两者都没有 → 旧版·停采；'
+      +'④ 分类以「停采」开头 → <b>停采</b>。</p>';
     html+='<p><b>货值口径</b>：按零售价（数据源固定成本价为 0，不可用）。<b>在售分类</b>：'+((c.on_sale||[]).join('、'))+'。</p>';
     html+='<p><b>数据铁律</b>：看板仅读取 Excel，绝不回写；无数据不展示；对照源表逐项核对。</p>';
     document.getElementById('setBody').innerHTML=html;
