@@ -65,6 +65,67 @@ def verify_online():
     return ok
 
 
+def _find_node_bin():
+    """动态探测可用的 Node.js bin 目录（2026-09-08 修复：不再硬编码单一版本路径）。
+    根因：WorkBuddy 托管的 versions/ 目录会在平台更新时被删除重装/改名
+    （例：22.22.2 -> 22.22.2-2），硬编码路径失效 -> node 注入失败 ->
+    vercel.cmd 报 '"node" 不是内部或外部命令'，此类 deploy FAIL 反复复发。
+    探测顺序：current 指针（平台自动维护，最权威）-> 已知版本 -> 目录扫描兜底。
+    """
+    versions_root = r'C:\Users\QwQ\.workbuddy\binaries\node\versions'
+    candidates = []
+    # 1) current 指针文件（平台自动更新指向当前可用版本）
+    current_file = os.path.join(versions_root, 'current')
+    try:
+        with open(current_file, encoding='utf-8') as f:
+            cur = f.read().strip()
+        if cur and not cur.startswith('.'):
+            candidates.append(os.path.join(versions_root, cur))
+    except Exception:
+        pass
+    # 2) 已知版本目录
+    candidates += [
+        os.path.join(versions_root, '22.22.2-2'),
+        os.path.join(versions_root, '24.14.0'),
+        os.path.join(versions_root, '22.22.2'),
+    ]
+    # 3) 目录扫描兜底（跳过 .deleting/.locks 等临时目录）
+    try:
+        candidates += [os.path.join(versions_root, d) for d in os.listdir(versions_root)
+                       if not d.startswith('.') and os.path.isdir(os.path.join(versions_root, d))]
+    except Exception:
+        pass
+    seen = set()
+    for cand in candidates:
+        if cand in seen:
+            continue
+        seen.add(cand)
+        if os.path.isfile(os.path.join(cand, 'node.exe')):
+            return cand
+    return None
+
+
+def _notify_fail(stage, detail):
+    """部署失败 / 线上自检失败时推钉钉告警（2026-09-08 新增：失败主动告警，
+    无人值守时不再"停更几天没人知道"）。复用 send_dingtalk.py 的配置与发送通道。"""
+    try:
+        import send_dingtalk
+        cfg = send_dingtalk.load_config()
+        if not cfg:
+            print('        [notify] 无 dingtalk_config.txt，跳过失败告警')
+            return
+        text = ('### ITO 库存看板 · 网页部署' + stage + '\n\n'
+                '> ' + detail + '\n\n'
+                '日志：' + BASE + '\\deploy_vercel_fail_*.log\n\n'
+                '线上：https://ito-inventory-dashboard.vercel.app')
+        payload = {"msgtype": "markdown",
+                   "markdown": {"title": "ITO 库存看板部署" + stage, "text": text}}
+        resp = send_dingtalk.send(cfg, payload)
+        print(f'        [notify] 钉钉告警已发送: {resp.get("errmsg", resp)}')
+    except Exception as e:
+        print(f'        [notify] 钉钉告警发送失败(不阻断): {e}')
+
+
 def main():
     # 读取 token
     if not os.path.exists(TOKEN_FILE):
@@ -81,24 +142,34 @@ def main():
     # 清空 NODE_OPTIONS（避免 WorkBuddy safe-delete shim 干扰）
     env = os.environ.copy()
     env['NODE_OPTIONS'] = ''
-    # 注入 Node.js bin 到 PATH（2026-08-20 修复：用户双击 cmd 环境的 PATH 不含 node，
-    # 导致 vercel.cmd 内部 'node 不是内部或外部命令' exit=1，部署 3 次全失败）
-    node_bin = r'C:\Users\QwQ\.workbuddy\binaries\node\versions\22.22.2'
-    if os.path.isdir(node_bin):
+    # 动态探测 Node.js bin 并注入 PATH（2026-08-20 首次修复：cmd 环境 PATH 不含 node；
+    # 2026-09-08 根治：不再硬编码版本路径，平台重装/改名后自动适配）
+    node_bin = _find_node_bin()
+    if node_bin:
         env['PATH'] = node_bin + os.pathsep + env.get('PATH', '')
-        env['NODE'] = node_bin + r'\node.exe'
+        env['NODE'] = os.path.join(node_bin, 'node.exe')
         print(f"        [fix] 已注入 Node.js bin: {node_bin}")
-
-    # vercel.cmd 路径
-    vercel_cmd = os.path.join(BASE, 'node_modules', '.bin', 'vercel.cmd')
-    if not os.path.exists(vercel_cmd):
-        print('[ERROR] 未找到 node_modules/.bin/vercel.cmd')
-        log_run('deploy FAIL (vercel.cmd not found)')
-        return 1
+    else:
+        print('        [warn] 未探测到可用 Node.js 目录，将退回 vercel.cmd 依赖系统 PATH')
 
     deploy_dir = os.path.join(BASE, 'deploy')
-    cmd = [vercel_cmd, 'deploy', deploy_dir, '--prod', '--yes', '--name',
-           'ito-inventory-dashboard', '--token', token]
+
+    # 2026-09-08：优先用探测到的 node.exe 直调 vercel 入口 vc.js，
+    # 彻底绕开 vercel.cmd 对 PATH/PATHEXT 的依赖（.cmd 本质就是 node vc.js %*）
+    vc_js = os.path.join(BASE, 'node_modules', 'vercel', 'dist', 'vc.js')
+    if node_bin and os.path.isfile(vc_js):
+        node_exe = os.path.join(node_bin, 'node.exe')
+        cmd = [node_exe, vc_js, 'deploy', deploy_dir, '--prod', '--yes', '--name',
+               'ito-inventory-dashboard', '--token', token]
+    else:
+        # 兜底：退回 vercel.cmd
+        vercel_cmd = os.path.join(BASE, 'node_modules', '.bin', 'vercel.cmd')
+        if not os.path.exists(vercel_cmd):
+            print('[ERROR] 未找到可用的 node 与 vercel.cmd，无法部署')
+            log_run('deploy FAIL (node & vercel.cmd not found)')
+            return 1
+        cmd = [vercel_cmd, 'deploy', deploy_dir, '--prod', '--yes', '--name',
+               'ito-inventory-dashboard', '--token', token]
 
     max_attempts = 3
     for attempt in range(1, max_attempts + 1):
@@ -126,6 +197,7 @@ def main():
                 try:
                     if not verify_online():
                         print('        [VERIFY FAIL] 线上内容与本地不一致或页面缺少更新时间轴，请人工检查！')
+                        _notify_fail('异常', '部署命令成功但线上自检未通过（数据时间戳不一致或页面缺时间轴）')
                 except Exception as e:
                     print(f'        [VERIFY] 自检异常（不阻断）: {e}')
                 return 0
@@ -148,6 +220,16 @@ def main():
             if attempt < max_attempts:
                 time.sleep(5)
 
+    # 3 次尝试均失败 → 主动钉钉告警（2026-09-08：失败不再等人发现）
+    try:
+        fail_log = os.path.join(BASE, 'deploy_vercel_fail_1.log')
+        head = '未知错误（无失败日志）'
+        if os.path.exists(fail_log):
+            with open(fail_log, encoding='utf-8', errors='replace') as f:
+                head = f.read(300).strip().replace('\r', ' ').replace('\n', ' ')[:200]
+        _notify_fail('失败', head)
+    except Exception:
+        pass
     print('[ERROR] 3 次尝试均失败，详见 deploy_vercel_fail_*.log')
     log_run('deploy FAIL (3 attempts)')
     return 1

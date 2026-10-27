@@ -2,7 +2,8 @@
 title ITO 库存看板 · 每日刷新
 setlocal
 
-cd /d "D:\E盘文件\ITO库存看板系统"
+REM █ 修复：用 %~dp0 替代项目绝对路径，项目搬家/改名不再失效 █
+cd /d "%~dp0"
 
 echo ================================================
 echo   ITO 库存看板 · 每日数据刷新
@@ -20,26 +21,61 @@ if not exist "库存-每日.xlsx" (
 )
 
 echo [1/4] 正在检测 Python 环境...
-set PYCMD=C:\Users\QwQ\.workbuddy\binaries\python\versions\3.13.12\python.exe
-"%PYCMD%" -c "import openpyxl" >nul 2>&1
+REM ====================================================================
+REM 动态定位 Python.exe【禁止写死版本号或安装目录】
+REM   平台重装会删除 envs\default；versions\ 下是符号链接且版本号会变。
+REM   优先级：环境变量 ITO_PYTHON -> venv(唯一带 pandas/openpyxl) -> versions\current
+REM   绝不兜底 WindowsApps\python.exe（商店 stub，运行会弹窗卡住无人值守）
+REM ====================================================================
+set "PYTHON="
+set "PYVENV=C:\Users\QwQ\.workbuddy\binaries\python\envs\default\Scripts\python.exe"
+set "PYVER=C:\Users\QwQ\.workbuddy\binaries\python\versions"
+set "PYCV="
+
+if defined ITO_PYTHON if exist "%ITO_PYTHON%" set "PYTHON=%ITO_PYTHON%"
+if defined PYTHON goto PY_READY
+
+if exist "%PYVENV%" set "PYTHON=%PYVENV%"
+if defined PYTHON goto PY_READY
+
+if exist "%PYVER%\current" for /f "usebackq delims=" %%V in ("%PYVER%\current") do set "PYCV=%%V"
+if defined PYCV if exist "%PYVER%\%PYCV%\python.exe" set "PYTHON=%PYVER%\%PYCV%\python.exe"
+if defined PYTHON goto PY_READY
+
+echo [X] 找不到可用的 Python.exe！
+echo     已尝试：环境变量 ITO_PYTHON、venv、versions\current
+echo     修复建议：重装 WorkBuddy 后重建虚拟环境
+echo     本次未执行任何生成/推送，数据未被改动。
+pause
+exit /b 1
+
+:PY_READY
+echo [i] 使用 Python: %PYTHON%
+if /i not "%PYTHON%"=="%PYVENV%" (
+    echo [!] 警告：当前不是标准 venv，可能缺少 pandas/openpyxl
+    echo     若报 ModuleNotFoundError，请重建 venv 后重跑本脚本
+)
+echo.
+"%PYTHON%" -c "import openpyxl" >nul 2>&1
 if errorlevel 1 (
-    echo [错误] 未找到可用的 Python 环境（需要 openpyxl 模块）
-    echo 请安装:  pip install openpyxl
+    echo [X] 当前 Python 缺少 openpyxl 模块，无法读取 Excel。
+    echo     请运行: pip install openpyxl
+    echo     本次未执行任何生成/部署，数据未被改动。
     echo.
     pause
     exit /b 1
 )
-echo       使用: %PYCMD%
+echo       依赖检查通过（openpyxl 可用）
 
 set PYTHONIOENCODING=gbk
 echo [2/4] 正在读取库存数据并计算指标...
-%PYCMD% build_inventory.py
+"%PYTHON%" build_inventory.py
 if errorlevel 1 goto :ERR
 echo [%date% %time%] build OK >> run.log
 
 echo.
 echo [3/4] 正在推送钉钉预警...
-%PYCMD% send_dingtalk.py
+"%PYTHON%" send_dingtalk.py
 if errorlevel 1 echo [提示] 钉钉推送失败（不影响本地构建）
 echo [%date% %time%] dingtalk done >> run.log
 
@@ -55,7 +91,7 @@ if not exist "vercel_token.txt" (
 echo        正在部署...
 REM ===== 修复 2026-08-19：改用独立 Python 部署脚本（精确退出码 + 失败自动重试 3 次 + 完整日志），根治 bat errorlevel 误判 =====
 set "NODE_OPTIONS="
-%PYCMD% "%~dp0deploy_vercel.py"
+"%PYTHON%" "%~dp0deploy_vercel.py"
 if errorlevel 1 (
     echo [提示] 网页部署 3 次尝试均失败，详见 deploy_vercel_fail_*.log，本地看板已更新
     echo [%date% %time%] deploy FAIL >> run.log

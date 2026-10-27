@@ -26,6 +26,13 @@ _*.py
 _*.js
 _*.json
 *.log
+_*.png
+
+# 备份（改动前的存档，不入库）
+_bak_*/
+_bak_*
+*.bak
+*.bak_*
 
 # Node 依赖（vercel CLI 本地安装）
 node_modules/
