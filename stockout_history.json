@@ -48,9 +48,9 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 64,
     "calendar_span": 64,
-    "status": "缺货中",
+    "status": "已停采",
     "cat": "旅行生活",
-    "lifecycle": "在售",
+    "lifecycle": "停采",
     "code": "6920411322956"
   },
   "LLT2I2603S00PNK06N028": {
@@ -63,9 +63,9 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 64,
     "calendar_span": 64,
-    "status": "缺货中",
+    "status": "已停采",
     "cat": "旅行生活",
-    "lifecycle": "在售",
+    "lifecycle": "停采",
     "code": "6979918612947"
   },
   "LCMBG2604A00ORE01N000": {
@@ -1379,8 +1379,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 19,
     "calendar_span": 19,
-    "status": "缺货中",
-    "lifecycle": "在售",
+    "status": "已停采",
+    "lifecycle": "停采",
     "code": "6979918612930"
   },
   "CBB28B1B1": {
@@ -1423,8 +1423,8 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 7,
     "calendar_span": 8,
-    "status": "缺货中",
-    "lifecycle": "在售",
+    "status": "已停采",
+    "lifecycle": "停采",
     "code": "6920411318669"
   },
   "F016258601": {

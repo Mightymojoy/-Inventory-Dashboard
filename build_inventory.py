@@ -122,17 +122,18 @@ UPCOMING_CODES = {
 #   （同系列 20/24 英寸旧版 ERP 已标「停采旅行箱」，无需入名单）
 # 原则：**ERP 优先，名单只补漏，名单一律按编码锁定**。
 
-# 年度限定色停采名单（人工确认，2026-10-27 老大指定）：
+# 年度限定色停采名单（人工确认，2026-10-27 老大指定，同日两次扩充）：
 #   气泡粉 / 波子绿 / 苏打橙 是「每年的限定色」，售完即止、不再补货，属停采。
-#   **只对行李箱生效。** 这三个色名在库里一共命中 45 个 SKU：
-#       旅行箱   9 个（可发  351 件）→ 本名单，判停采
-#       包袋     6 个（可发  646 件）→ 正常在售，不动
-#       旅行生活 30 个（可发 4717 件）→ 正常在售，不动（伞/水杯/购物袋/洗漱包/行李牌）
+#   这三个色名在库里一共命中 45 个 SKU，按老大两次指令的范围划分：
+#       旅行箱   9 个（可发  351 件）→ 判停采（第一次指令）
+#       旅行生活 30 个（可发 4717 件）→ 判停采（第二次指令：「旅行生活也属于停采周边」）
+#       包袋     6 个（可发  646 件）→ **仍在售，不动**（老大 2026-10-27 明确选定）
 #   所以这里**故意用「商品编码」精确锁定，不写色名关键字规则** ——
-#   关键字规则会把 5363 件正常在售库存打成停采，KPI 出现虚假改善。
+#   关键字规则会把包袋 646 件正常在售库存一起打成停采，KPI 出现虚假改善。
 # 维护：明年这三色若作为新年度限定色回归，是**新的商品编码**，本名单不会误伤；
-#       反之若新增尺寸，需把新编码补进来，否则会仍判「在售」。
+#       反之若新增尺寸/新增周边品类，需把新编码补进来，否则会仍判「在售」。
 LIMITED_COLOR_DISC = {
+    # ---- 旅行箱 9 个（PISTACHIO 2 STRIPED 亮面 TRUNK）----
     "6920411322055": "亮面气泡粉20英寸旅行箱 TRUNK",
     "6920411322086": "亮面气泡粉26英寸旅行箱 TRUNK",
     "6920411322116": "亮面气泡粉30英寸旅行箱 TRUNK",
@@ -142,8 +143,58 @@ LIMITED_COLOR_DISC = {
     "6920411322062": "亮面苏打橙20英寸旅行箱 TRUNK",
     "6920411322093": "亮面苏打橙26英寸旅行箱 TRUNK",
     "6920411322123": "亮面苏打橙30英寸旅行箱 TRUNK",
+    # ---- 旅行生活 30 个（周边：伞 / 水杯 / 购物袋 / 洗漱包 / 行李牌 / 手机包 / 电脑包）----
+    "6920411322796": "UMBRELLA 气泡粉旅行生活",
+    "6920411322789": "UMBRELLA 波子绿旅行生活",
+    "6920411322802": "UMBRELLA 苏打橙旅行生活",
+    "6920411322765": "WATER BOTTLE 气泡粉旅行生活",
+    "6920411322758": "WATER BOTTLE 波子绿旅行生活",
+    "6920411322772": "WATER BOTTLE 苏打橙旅行生活",
+    "6979918613371": "WATER BOTTLE BAG CORDURA气泡粉旅行生活",
+    "6979918613357": "WATER BOTTLE BAG CORDURA波子绿旅行生活",
+    "6979918613364": "WATER BOTTLE BAG CORDURA苏打橙旅行生活",
+    "6979918613289": "SHOPPING TOTE CORDURA气泡粉旅行生活",
+    "6979918613265": "SHOPPING TOTE CORDURA波子绿旅行生活",
+    "6979918613272": "SHOPPING TOTE CORDURA苏打橙旅行生活",
+    "6979918613319": "LAPTOP SLEEVE CORDURA气泡粉旅行生活",
+    "6979918613296": "LAPTOP SLEEVE CORDURA波子绿旅行生活",
+    "6979918613302": "LAPTOP SLEEVE CORDURA苏打橙旅行生活",
+    "6979918613401": "PHONE POUCH CORDURA气泡粉旅行生活",
+    "6979918613388": "PHONE POUCH CORDURA波子绿旅行生活",
+    "6979918613395": "PHONE POUCH CORDURA苏打橙旅行生活",
+    "6979918613340": "COSMETIC BAG CORDURA气泡粉旅行生活",
+    "6979918613326": "COSMETIC BAG CORDURA波子绿旅行生活",
+    "6979918613333": "COSMETIC BAG CORDURA苏打橙旅行生活",
+    "6979918612930": "LUGGAGE TAG 2 ICON 硅胶气泡粉 五角星",
+    "6979918612947": "LUGGAGE TAG 2 ICON 硅胶气泡粉 爱心",
+    "6979918612978": "LUGGAGE TAG 2 ICON 硅胶波子绿 五角星",
+    "6979918612985": "LUGGAGE TAG 2 ICON 硅胶波子绿 爱心",
+    "6979918612954": "LUGGAGE TAG 2 ICON 硅胶苏打橙 五角星",
+    "6979918612961": "LUGGAGE TAG 2 ICON 硅胶苏打橙 爱心",
+    "6920411322956": "LUGGAGE TAG 2 超纤气泡粉",
+    "6920411322970": "LUGGAGE TAG 2 超纤波子绿",
+    "6920411322963": "LUGGAGE TAG 2 超纤苏打橙",
 }
 LIMITED_COLOR_WHY = "年度限定色（气泡粉/波子绿/苏打橙），售完即止不补货"
+
+# 指定颜色停采名单（人工确认，2026-10-27 老大指定）：
+#   ITO TRUFFLE BACKPACK 2 系列 CAMIRA ERA 的 **黛蓝 / 稻黄** 两色 12L、18L 包袋共 4 个，
+#   属停采商品（颜色退出，非新旧版迭代，故与旧版淘汰名单分开管理）。
+#
+#   **不能写名称关键字。** 同系列还有大量在售色，且名称高度相似：
+#       岩白 780/522、松褐 237/252、棕褐 34/49、沥灰 108/85（12L/18L，均在售）
+#   其中「松褐」与「棕褐」仅一字之差；另外黛蓝 12L 还有一个
+#   「…黛蓝12L定制包袋 抖音」（定制分类），按名称匹配会一并命中。
+#   定制分支优先级高于本名单，定制款不受影响；但为防以后调整优先级顺序时误伤，
+#   这里同样**只用商品编码精确锁定**。
+# 维护：若这两色恢复在售，需先删条目，否则会仍判停采。
+COLOR_PHASE_OUT = {
+    "6920411318669": "TRUFFLE BACKPACK 2 CAMIRA ERA黛蓝12L",
+    "6920411318706": "TRUFFLE BACKPACK 2 CAMIRA ERA黛蓝18L",
+    "6920411318652": "TRUFFLE BACKPACK 2 CAMIRA ERA稻黄12L",
+    "6920411318690": "TRUFFLE BACKPACK 2 CAMIRA ERA稻黄18L",
+}
+COLOR_PHASE_OUT_WHY = "指定颜色退出（CAMIRA ERA 黛蓝/稻黄），售完即止不补货"
 
 # 旧版淘汰名单（人工确认，2026-10-27 老大指定）：
 #   ITO PISTACHIO STRIPED 系列 亮面炭黑 / 亮面烟白 的 20、24、28 英寸旅行箱属旧版，
@@ -178,12 +229,13 @@ def detect_lifecycle(name, cat, code=""):
       1. 未上市   —— 名称含 FIND ITO，或命中 UPCOMING_EXTRA（名称片段）/ UPCOMING_CODES（商品编码）
       2. 定制     —— 按需定制分类，可发=0 属正常，不参与缺货/预警
       3. 分类停采 —— 分类本身以「停采」开头（ERP 唯一依据）
-      4. 限定色停采 —— 命中 LIMITED_COLOR_DISC 商品编码（人工名单，仅行李箱）
+      4. 限定色停采 —— 命中 LIMITED_COLOR_DISC 商品编码（年度限定色：旅行箱 9 + 旅行生活 30）
       5. 旧版淘汰 —— 命中 SUPERSEDED_DISC 商品编码（人工名单，ERP 漏标分类的旧版尾货）
-      6. 在售
+      6. 指定色停采 —— 命中 COLOR_PHASE_OUT 商品编码（人工名单，颜色退出如 CAMIRA ERA 黛蓝/稻黄）
+      7. 在售
 
     停采与在售以 ERP「分类」字段为主依据，不做名称推断（2026-10-27 老大确认）；
-    4、5 两级只补 ERP 未标注的那一小部分，且**只用商品编码**，不用名称关键字。
+    4、5、6 三级只补 ERP 未标注的那一部分，且**只用商品编码**，不用名称关键字。
     定制必须排在分类停采之前：定制款可发=0 是 B 端订单常态，不是缺货。
     """
     upper = (name or "").upper()
@@ -198,10 +250,13 @@ def detect_lifecycle(name, cat, code=""):
         return LIFE_CUSTOM, "定制分类"
     if str(cat or "").startswith("停采"):
         return LIFE_DISCONTINUED, "分类为停采"
-    if code and str(code).strip() in LIMITED_COLOR_DISC:
-        return LIFE_DISCONTINUED, LIMITED_COLOR_WHY
-    if code and str(code).strip() in SUPERSEDED_DISC:
-        return LIFE_DISCONTINUED, "%s（%s）" % (SUPERSEDED_WHY, SUPERSEDED_DISC[str(code).strip()])
+    c = str(code).strip() if code else ""
+    if c and c in LIMITED_COLOR_DISC:
+        return LIFE_DISCONTINUED, "%s（%s）" % (LIMITED_COLOR_WHY, LIMITED_COLOR_DISC[c])
+    if c and c in SUPERSEDED_DISC:
+        return LIFE_DISCONTINUED, "%s（%s）" % (SUPERSEDED_WHY, SUPERSEDED_DISC[c])
+    if c and c in COLOR_PHASE_OUT:
+        return LIFE_DISCONTINUED, "%s（%s）" % (COLOR_PHASE_OUT_WHY, COLOR_PHASE_OUT[c])
     return LIFE_ON_SALE, ""
 
 # ---------------- 工具 ----------------
@@ -784,7 +839,7 @@ def compute(path=XLSX_PATH):
     ]
 
     result = {
-        "version": "0.13.2",
+        "version": "0.13.3",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
