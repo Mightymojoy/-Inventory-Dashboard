@@ -868,7 +868,7 @@ def compute(path=XLSX_PATH):
         })
 
     result = {
-        "version": "0.13.4",
+        "version": "0.13.5",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
@@ -919,6 +919,266 @@ def _day_diff(d1, d2):
         return (b - a).days
     except Exception:
         return 0
+
+
+# ---------------- 缺货事件台账（2026-10-28 新增） ----------------
+# 背景：原 stockout_history.json 是「一 SKU 一条记录」，同一 SKU 第二次缺货时
+# first_stockout 不变、stockout_days 只 +1，导致「第二次从哪天开始缺」永久丢失，
+# calendar_span 也退化为「总跨度」，把中途有货的日子算进了缺货。
+# 本层把「缺货」提升为可多次发生的**事件**，一 SKU 多事件、永不覆盖。
+# 铁律：未上市/停采/定制一律不建事件（从闸门处排除，而非先建再改状态）。
+EVENTS_FILE = "stockout_events.json"
+EVENTS_ALLOWED_LIFE = (LIFE_ON_SALE,)
+EVENTS_EXCLUDED_LIFE = (LIFE_UPCOMING, LIFE_DISCONTINUED, LIFE_CUSTOM)
+
+
+def _parse_date(s):
+    """YYYY-MM-DD → date；失败返回 None"""
+    try:
+        return datetime.datetime.strptime(str(s), "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
+def _load_events_doc():
+    """读取事件台账；不存在或格式不对返回 None（由调用方触发迁移）"""
+    p = os.path.join(OUT_DIR, EVENTS_FILE)
+    if not os.path.exists(p):
+        return None
+    try:
+        with open(p, encoding="utf-8") as f:
+            doc = json.load(f)
+        if isinstance(doc, dict) and isinstance(doc.get("events"), list):
+            return doc
+    except Exception:
+        pass
+    return None
+
+
+def _migrate_events_from_history(hist):
+    """把 v0.13.x 的「一 SKU 一条合并记录」一次性迁移为事件（source=merged_legacy）。
+
+    合并记录的固有限制，必须在数据里显式留痕、不假装精确：
+      - days 为历次观测累计，span 为首末日历跨度，二者不可用于单次评估
+      - 补货日无原始快照，只能取 last_stockout 次日近似，故 date_approx=True
+      - 未上市商品的记录属旧口径误登记（从未上架却被记为缺货），
+        标 excluded=未上市，页面默认不进主表
+    """
+    evs = []
+    for sku, r in (hist or {}).items():
+        start = r.get("first_stockout")
+        if not start:
+            continue
+        status = r.get("status") or ""
+        lc = r.get("lifecycle") or ""
+        last = r.get("last_stockout") or start
+        days = int(r.get("stockout_days") or 0)
+        span = int(r.get("calendar_span") or 0)
+
+        excluded = None
+        if lc == LIFE_UPCOMING:
+            excluded = LIFE_UPCOMING
+            reason = LIFE_UPCOMING
+        elif status == "缺货中":
+            reason = None
+        elif status == "已停采":
+            reason = LIFE_DISCONTINUED
+        elif status == "已下市":
+            reason = LIFE_UPCOMING
+        else:
+            reason = "补货"
+
+        end = None
+        d_last = _parse_date(last)
+        if reason and d_last:
+            end = (d_last + datetime.timedelta(days=1)).isoformat()
+
+        evs.append({
+            "event_id": "%s#%s" % (sku, start),
+            "sku": sku, "code": r.get("code") or "",
+            "name": r.get("name") or "", "cat": r.get("cat") or "",
+            "series": r.get("series") or "", "color": r.get("color") or "",
+            "size": r.get("size") or "",
+            "start_date": start, "last_stockout": last, "end_date": end,
+            "days": days, "span": span,
+            "kf_at_start": None, "kf_min": None,
+            "end_reason": reason, "excluded": excluded,
+            "source": "merged_legacy", "date_approx": True,
+            "gaps": max(span - days, 0),
+        })
+    return evs
+
+
+def _attach_events_to_history(hist, events):
+    """按 SKU 把事件聚合回档案记录，供页面直接消费（避免页面二次关联）
+
+    事件层是唯一事实源：若事件里有、档案里还没有的 SKU（例如新建档时档案尚未收录），
+    此处补建汇总记录，保证派生字段不因调用顺序而丢失。
+    """
+    by_sku = {}
+    for e in events:
+        by_sku.setdefault(e.get("sku"), []).append(e)
+    if hist is None:
+        hist = {}
+    # 补建：事件有、档案无
+    for sku, evs in by_sku.items():
+        if sku in hist:
+            continue
+        evs = sorted(evs, key=lambda x: str(x.get("start_date") or ""))
+        head = evs[-1]
+        live0 = [e for e in evs if not e.get("excluded")]
+        hist[sku] = {
+            "sku": sku, "code": head.get("code") or "",
+            "cat": head.get("cat") or "", "series": head.get("series") or "",
+            "color": head.get("color") or "", "size": head.get("size") or "",
+            "name": head.get("name") or "",
+            "first_stockout": evs[0].get("start_date") or head.get("start_date"),
+            "last_stockout": head.get("last_stockout") or head.get("start_date"),
+            "stockout_days": sum(int(e.get("days") or 0) for e in live0),
+            "calendar_span": int(head.get("span") or 0),
+            "status": "已恢复" if head.get("end_date") else "缺货中",
+            "lifecycle": head.get("excluded") or LIFE_ON_SALE,
+        }
+    for sku, r in hist.items():
+        evs = sorted(by_sku.get(sku, []), key=lambda x: str(x.get("start_date") or ""))
+        r["events"] = [{
+            "start": e.get("start_date"), "end": e.get("end_date"),
+            "last": e.get("last_stockout"),
+            "days": e.get("days"), "span": e.get("span"),
+            "reason": e.get("end_reason"), "excluded": e.get("excluded"),
+            "source": e.get("source"), "approx": bool(e.get("date_approx")),
+            "kf_min": e.get("kf_min"),
+        } for e in evs]
+        live = [e for e in evs if not e.get("excluded")]
+        r["episodes"] = len(live)
+        op = [e for e in live if not e.get("end_date")]
+        r["current_start"] = op[0].get("start_date") if op else None
+        r["current_days"] = int(op[0].get("days") or 0) if op else 0
+        r["total_days"] = sum(int(e.get("days") or 0) for e in live)
+        # 最近补货日：只能取「结束原因=补货」的事件。
+        # 停采/未上市导致的闭合不是补货，若混入会把「下架日」误报成「补货日」。
+        restocked = [e for e in live if e.get("end_date") and e.get("end_reason") == "补货"]
+        r["last_restock"] = restocked[-1].get("end_date") if restocked else None
+        # 页面「缺货天数」用：未闭合取本轮进行天数，已闭合取最近一次事件天数
+        r["last_days"] = int(live[-1].get("days") or 0) if live else 0
+        r["show_days"] = (r["current_days"] if op else r["last_days"])
+        r["excluded_reason"] = LIFE_UPCOMING if r.get("lifecycle") == LIFE_UPCOMING else None
+    return hist
+
+
+def update_stockout_events(skus, hist, today=None):
+    """增量更新缺货事件台账（一 SKU 多事件，每次缺货一行，永不覆盖）。
+
+    状态机（仅「在售」参与，未上市/停采/定制从不建事件）：
+      本次缺货 + 已有未闭合事件 → 续记（days 按日差累加、span 刷新、kf_min 取更低）
+      本次缺货 + 无未闭合事件   → 新建事件（start=今天、days=1）
+      本次不缺货 + 有未闭合事件 → 闭合（end_date=今天，按生命周期定 end_reason）
+    幂等：事件以 event_id=SKU#start_date 为唯一键，同一天重复 build 不新增。
+    观测缺口：span - days 即「期间有货或未观测到的天数」，显式存 gaps 不掩盖。
+    返回台账 doc；同时把事件聚合回 hist 记录（页面用）。
+    """
+    if today is None:
+        today = datetime.date.today().isoformat()
+    doc = _load_events_doc()
+    fresh = doc is None
+    if fresh:
+        events = _migrate_events_from_history(hist)
+        doc = {
+            "_meta": {
+                "version": 1,
+                "created": today,
+                "note": "一 SKU 多事件；merged_legacy=旧合并记录迁移，days/span 不可用于单次评估",
+            },
+            "events": events,
+        }
+    events = doc["events"]
+
+    # 未闭合事件索引（排除被排除类，排除类不参与续记）
+    open_by_sku = {}
+    for e in events:
+        if e.get("end_date") is None and not e.get("excluded") and e.get("sku"):
+            open_by_sku[e["sku"]] = e
+
+    cur = {s["sku"]: s for s in skus
+           if s.get("level") == "缺货" and s.get("lifecycle") in EVENTS_ALLOWED_LIFE}
+    pool = {s["sku"]: s for s in skus if s.get("sku")}
+
+    # 1) 本次缺货：续记或新建
+    for sku, s in cur.items():
+        kf = float(s.get("kf") or 0)
+        e = open_by_sku.get(sku)
+        if e:
+            add = _day_diff(e.get("last_stockout") or e["start_date"], today)
+            e["last_stockout"] = today
+            e["days"] = int(e.get("days") or 1) + max(add, 0)
+            e["span"] = _day_diff(e["start_date"], today) + 1
+            cand = [x for x in (e.get("kf_min"), kf) if x is not None]
+            e["kf_min"] = min(cand) if cand else kf
+            e["gaps"] = max(int(e["span"]) - int(e["days"]), 0)
+            for k in ("name", "cat", "series", "color", "size", "code"):
+                if s.get(k):
+                    e[k] = s[k]
+        else:
+            events.append({
+                "event_id": "%s#%s" % (sku, today),
+                "sku": sku, "code": s.get("code") or "",
+                "name": s.get("name") or "", "cat": s.get("cat") or "",
+                "series": s.get("series") or "", "color": s.get("color") or "",
+                "size": s.get("size") or "",
+                "start_date": today, "last_stockout": today, "end_date": None,
+                "days": 1, "span": 1,
+                "kf_at_start": kf, "kf_min": kf,
+                "end_reason": None, "excluded": None,
+                "source": "live", "date_approx": False, "gaps": 0,
+            })
+
+    # 2) 本次不缺货但仍有未闭合事件 → 闭合，按生命周期定结束原因
+    for sku, e in list(open_by_sku.items()):
+        if sku in cur:
+            continue
+        s = pool.get(sku) or {}
+        lc = s.get("lifecycle")
+        if not lc:
+            lc, _ = detect_lifecycle(e.get("name", ""), e.get("cat", ""), e.get("code", ""))
+        if lc == LIFE_UPCOMING:
+            e["end_reason"] = LIFE_UPCOMING
+            e["excluded"] = LIFE_UPCOMING
+        elif lc == LIFE_DISCONTINUED:
+            e["end_reason"] = LIFE_DISCONTINUED
+        elif lc == LIFE_CUSTOM:
+            e["end_reason"] = LIFE_CUSTOM
+        else:
+            e["end_reason"] = "补货"
+        e["end_date"] = today
+        e["span"] = _day_diff(e["start_date"], today) + 1
+        e["gaps"] = max(int(e["span"]) - int(e["days"]), 0)
+
+    # 3) 元信息（build 日期序列用于评估观测缺口）
+    meta = doc.setdefault("_meta", {})
+    bd = [d for d in (meta.get("build_dates") or []) if d]
+    if today not in bd:
+        bd.append(today)
+    meta["build_dates"] = sorted(set(bd))[-120:]
+    meta["last_build"] = today
+    meta["event_count"] = len(events)
+    meta["open_count"] = sum(1 for e in events
+                             if not e.get("end_date") and not e.get("excluded"))
+    meta["excluded_count"] = sum(1 for e in events if e.get("excluded"))
+
+    with open(os.path.join(OUT_DIR, EVENTS_FILE), "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False, indent=2)
+
+    hist = _attach_events_to_history(hist, events)
+    # 事件聚合后的派生字段（current_start / current_days / episodes / last_restock /
+    # total_days / excluded_reason）必须落盘，否则页面拿不到
+    if hist is not None:
+        with open(os.path.join(OUT_DIR, "stockout_history.json"), "w", encoding="utf-8") as f:
+            json.dump(hist, f, ensure_ascii=False, indent=2)
+    n_live = sum(1 for e in events if not e.get("excluded"))
+    print("[ok] 缺货事件台账: 事件 %d（有效 %d / 已排除 %d）｜ 未闭合 %d ｜ 本次%s"
+          % (len(events), n_live, len(events) - n_live, meta["open_count"],
+             "迁移自历史档案" if fresh else "增量更新"))
+    return doc
 
 
 def update_stockout_history(skus, today=None):
@@ -1157,5 +1417,9 @@ if __name__ == "__main__":
         res = compute(xlsx)
         # 缺货历史增量更新（2026-08-25）：持久化每个缺货 SKU 的首次/末次/天数/跨度/状态
         res["stockout_history"] = update_stockout_history(res["skus"])
+        # 缺货事件台账（2026-10-28）：一 SKU 多事件，解决「多次缺货被覆盖」，
+        # 同时把未上市/停采/定制的误登记记录排除出主表
+        _ev_doc = update_stockout_events(res["skus"], res["stockout_history"])
+        res["stockout_events_meta"] = _ev_doc.get("_meta", {})
         write_json(res)
         bundle(res, password=get_password())

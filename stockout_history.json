@@ -10,7 +10,29 @@
     "stockout_days": 4,
     "calendar_span": 4,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-08-29",
+        "last": "2026-08-28",
+        "days": 4,
+        "span": 4,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 4,
+    "last_restock": "2026-08-29",
+    "excluded_reason": null,
+    "last_days": 4,
+    "show_days": 4
   },
   "LLGT22506M00PNK05N000": {
     "sku": "LLGT22506M00PNK05N000",
@@ -23,7 +45,29 @@
     "stockout_days": 7,
     "calendar_span": 7,
     "status": "已恢复",
-    "cat": "旅行生活"
+    "cat": "旅行生活",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-01",
+        "last": "2026-08-31",
+        "days": 7,
+        "span": 7,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 7,
+    "last_restock": "2026-09-01",
+    "excluded_reason": null,
+    "last_days": 7,
+    "show_days": 7
   },
   "CG4ST2507S20GRY13H000": {
     "sku": "CG4ST2507S20GRY13H000",
@@ -36,7 +80,29 @@
     "stockout_days": 2,
     "calendar_span": 2,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-08-27",
+        "last": "2026-08-26",
+        "days": 2,
+        "span": 2,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 2,
+    "last_restock": "2026-08-27",
+    "excluded_reason": null,
+    "last_days": 2,
+    "show_days": 2
   },
   "LLGT22603M00PNK06N000": {
     "sku": "LLGT22603M00PNK06N000",
@@ -51,7 +117,29 @@
     "status": "已停采",
     "cat": "旅行生活",
     "lifecycle": "停采",
-    "code": "6920411322956"
+    "code": "6920411322956",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 64,
+        "span": 64,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 64,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 64,
+    "show_days": 64
   },
   "LLT2I2603S00PNK06N028": {
     "sku": "LLT2I2603S00PNK06N028",
@@ -66,7 +154,29 @@
     "status": "已停采",
     "cat": "旅行生活",
     "lifecycle": "停采",
-    "code": "6979918612947"
+    "code": "6979918612947",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 64,
+        "span": 64,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 64,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 64,
+    "show_days": 64
   },
   "LCMBG2604A00ORE01N000": {
     "sku": "LCMBG2604A00ORE01N000",
@@ -79,7 +189,29 @@
     "stockout_days": 11,
     "calendar_span": 11,
     "status": "已恢复",
-    "cat": "旅行生活"
+    "cat": "旅行生活",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-05",
+        "last": "2026-09-04",
+        "days": 11,
+        "span": 11,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 11,
+    "last_restock": "2026-09-05",
+    "excluded_reason": null,
+    "last_days": 11,
+    "show_days": 11
   },
   "DTPBP2604E12BRN04D000": {
     "sku": "DTPBP2604E12BRN04D000",
@@ -92,7 +224,29 @@
     "stockout_days": 2,
     "calendar_span": 2,
     "status": "已恢复",
-    "cat": "包袋"
+    "cat": "包袋",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-08-27",
+        "last": "2026-08-26",
+        "days": 2,
+        "span": 2,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 2,
+    "last_restock": "2026-08-27",
+    "excluded_reason": null,
+    "last_days": 2,
+    "show_days": 2
   },
   "CP2ST2607S20BRN01G115": {
     "sku": "CP2ST2607S20BRN01G115",
@@ -105,7 +259,29 @@
     "stockout_days": 17,
     "calendar_span": 17,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-11",
+        "last": "2026-09-10",
+        "days": 17,
+        "span": 17,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 17,
+    "last_restock": "2026-09-11",
+    "excluded_reason": null,
+    "last_days": 17,
+    "show_days": 17
   },
   "CP2ST2607S20PNK07G115": {
     "sku": "CP2ST2607S20PNK07G115",
@@ -118,7 +294,29 @@
     "stockout_days": 14,
     "calendar_span": 14,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-08",
+        "last": "2026-09-07",
+        "days": 14,
+        "span": 14,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 14,
+    "last_restock": "2026-09-08",
+    "excluded_reason": null,
+    "last_days": 14,
+    "show_days": 14
   },
   "CP2ST2607S20VLT09G115": {
     "sku": "CP2ST2607S20VLT09G115",
@@ -131,7 +329,29 @@
     "stockout_days": 15,
     "calendar_span": 15,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-09",
+        "last": "2026-09-08",
+        "days": 15,
+        "span": 15,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 15,
+    "last_restock": "2026-09-09",
+    "excluded_reason": null,
+    "last_days": 15,
+    "show_days": 15
   },
   "CP2ST2607S26BRN01G115": {
     "sku": "CP2ST2607S26BRN01G115",
@@ -144,7 +364,29 @@
     "stockout_days": 17,
     "calendar_span": 17,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-11",
+        "last": "2026-09-10",
+        "days": 17,
+        "span": 17,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 17,
+    "last_restock": "2026-09-11",
+    "excluded_reason": null,
+    "last_days": 17,
+    "show_days": 17
   },
   "CP2ST2607S26PNK07G115": {
     "sku": "CP2ST2607S26PNK07G115",
@@ -157,7 +399,29 @@
     "stockout_days": 14,
     "calendar_span": 14,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-08",
+        "last": "2026-09-07",
+        "days": 14,
+        "span": 14,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 14,
+    "last_restock": "2026-09-08",
+    "excluded_reason": null,
+    "last_days": 14,
+    "show_days": 14
   },
   "CP2ST2607S26VLT09G115": {
     "sku": "CP2ST2607S26VLT09G115",
@@ -170,7 +434,29 @@
     "stockout_days": 5,
     "calendar_span": 11,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-05",
+        "last": "2026-09-04",
+        "days": 5,
+        "span": 11,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 5,
+    "last_restock": "2026-09-05",
+    "excluded_reason": null,
+    "last_days": 5,
+    "show_days": 5
   },
   "CP2ST2607S30BRN01G115": {
     "sku": "CP2ST2607S30BRN01G115",
@@ -183,7 +469,29 @@
     "stockout_days": 15,
     "calendar_span": 15,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-09",
+        "last": "2026-09-08",
+        "days": 15,
+        "span": 15,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 15,
+    "last_restock": "2026-09-09",
+    "excluded_reason": null,
+    "last_days": 15,
+    "show_days": 15
   },
   "CP2ST2607S30PNK07G115": {
     "sku": "CP2ST2607S30PNK07G115",
@@ -196,7 +504,29 @@
     "stockout_days": 14,
     "calendar_span": 14,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-08",
+        "last": "2026-09-07",
+        "days": 14,
+        "span": 14,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 14,
+    "last_restock": "2026-09-08",
+    "excluded_reason": null,
+    "last_days": 14,
+    "show_days": 14
   },
   "CP2ST2607S30VLT09G115": {
     "sku": "CP2ST2607S30VLT09G115",
@@ -209,7 +539,29 @@
     "stockout_days": 11,
     "calendar_span": 11,
     "status": "已恢复",
-    "cat": "旅行箱"
+    "cat": "旅行箱",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-09-05",
+        "last": "2026-09-04",
+        "days": 11,
+        "span": 11,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 11,
+    "last_restock": "2026-09-05",
+    "excluded_reason": null,
+    "last_days": 11,
+    "show_days": 11
   },
   "DMCTT2608A16GRN22E000": {
     "sku": "DMCTT2608A16GRN22E000",
@@ -223,7 +575,29 @@
     "calendar_span": 64,
     "status": "已下市",
     "cat": "包袋",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-25",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 64,
+        "span": 64,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "F016298601": {
     "sku": "F016298601",
@@ -236,7 +610,29 @@
     "last_stockout": "2026-09-04",
     "stockout_days": 5,
     "calendar_span": 5,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-09-05",
+        "last": "2026-09-04",
+        "days": 5,
+        "span": 5,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 5,
+    "last_restock": "2026-09-05",
+    "excluded_reason": null,
+    "last_days": 5,
+    "show_days": 5
   },
   "LPKCB2608A06VLT08N000": {
     "sku": "LPKCB2608A06VLT08N000",
@@ -250,7 +646,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A06GRY14N000": {
     "sku": "LPKCB2608A06GRY14N000",
@@ -264,7 +682,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A06WHI12N000": {
     "sku": "LPKCB2608A06WHI12N000",
@@ -278,7 +718,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A09VLT08N000": {
     "sku": "LPKCB2608A09VLT08N000",
@@ -292,7 +754,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A09GRY14N000": {
     "sku": "LPKCB2608A09GRY14N000",
@@ -306,7 +790,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A09WHI12N000": {
     "sku": "LPKCB2608A09WHI12N000",
@@ -320,7 +826,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A12VLT08N000": {
     "sku": "LPKCB2608A12VLT08N000",
@@ -334,7 +862,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A12GRY14N000": {
     "sku": "LPKCB2608A12GRY14N000",
@@ -348,7 +898,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LPKCB2608A12WHI12N000": {
     "sku": "LPKCB2608A12WHI12N000",
@@ -362,7 +934,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LVNTY2608A04VLT08N000": {
     "sku": "LVNTY2608A04VLT08N000",
@@ -376,7 +970,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "LVNTY2608A04BLU20N000": {
     "sku": "LVNTY2608A04BLU20N000",
@@ -390,7 +1006,29 @@
     "stockout_days": 58,
     "calendar_span": 58,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-08-31",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 58,
+        "span": 58,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CCLWV2501S29GRN18A000": {
     "sku": "CCLWV2501S29GRN18A000",
@@ -403,7 +1041,29 @@
     "last_stockout": "2026-09-08",
     "stockout_days": 6,
     "calendar_span": 6,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-09-03",
+        "end": "2026-09-09",
+        "last": "2026-09-08",
+        "days": 6,
+        "span": 6,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 6,
+    "last_restock": "2026-09-09",
+    "excluded_reason": null,
+    "last_days": 6,
+    "show_days": 6
   },
   "CP2ST2512S30PNK06G115": {
     "sku": "CP2ST2512S30PNK06G115",
@@ -417,7 +1077,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已停采",
-    "lifecycle": "停采"
+    "lifecycle": "停采",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 51,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 51,
+    "show_days": 51
   },
   "CPSPS2604E20BRN04F000": {
     "sku": "CPSPS2604E20BRN04F000",
@@ -430,7 +1112,29 @@
     "last_stockout": "2026-09-08",
     "stockout_days": 2,
     "calendar_span": 2,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-09-09",
+        "last": "2026-09-08",
+        "days": 2,
+        "span": 2,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 2,
+    "last_restock": "2026-09-09",
+    "excluded_reason": null,
+    "last_days": 2,
+    "show_days": 2
   },
   "CPSSD2609S20GRN21F117": {
     "sku": "CPSSD2609S20GRN21F117",
@@ -444,7 +1148,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S20BLK03F117": {
     "sku": "CPSSD2609S20BLK03F117",
@@ -458,7 +1184,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S20WHI03F117": {
     "sku": "CPSSD2609S20WHI03F117",
@@ -472,7 +1220,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S20BRN04F117": {
     "sku": "CPSSD2609S20BRN04F117",
@@ -486,7 +1256,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S24GRN21F117": {
     "sku": "CPSSD2609S24GRN21F117",
@@ -500,7 +1292,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S24BLK03F117": {
     "sku": "CPSSD2609S24BLK03F117",
@@ -514,7 +1328,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S24WHI03F117": {
     "sku": "CPSSD2609S24WHI03F117",
@@ -528,7 +1364,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S24BRN04F117": {
     "sku": "CPSSD2609S24BRN04F117",
@@ -542,7 +1400,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S28GRN21F117": {
     "sku": "CPSSD2609S28GRN21F117",
@@ -556,7 +1436,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S28BLK03F117": {
     "sku": "CPSSD2609S28BLK03F117",
@@ -570,7 +1472,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S28WHI03F117": {
     "sku": "CPSSD2609S28WHI03F117",
@@ -584,7 +1508,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S28BRN04F117": {
     "sku": "CPSSD2609S28BRN04F117",
@@ -598,7 +1544,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S26GRN21F118": {
     "sku": "CPSSD2609S26GRN21F118",
@@ -612,7 +1580,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S26BLK03F118": {
     "sku": "CPSSD2609S26BLK03F118",
@@ -626,7 +1616,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S26WHI03F118": {
     "sku": "CPSSD2609S26WHI03F118",
@@ -640,7 +1652,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S26BRN04F118": {
     "sku": "CPSSD2609S26BRN04F118",
@@ -654,7 +1688,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S30GRN21F118": {
     "sku": "CPSSD2609S30GRN21F118",
@@ -668,7 +1724,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S30BLK03F118": {
     "sku": "CPSSD2609S30BLK03F118",
@@ -682,7 +1760,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S30WHI03F118": {
     "sku": "CPSSD2609S30WHI03F118",
@@ -696,7 +1796,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2609S30BRN04F118": {
     "sku": "CPSSD2609S30BRN04F118",
@@ -710,7 +1832,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E20BLK03F117": {
     "sku": "CPSPS2609E20BLK03F117",
@@ -724,7 +1868,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E20BRN04F117": {
     "sku": "CPSPS2609E20BRN04F117",
@@ -738,7 +1904,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E20GRN21F117": {
     "sku": "CPSPS2609E20GRN21F117",
@@ -752,7 +1940,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E20WHI03F117": {
     "sku": "CPSPS2609E20WHI03F117",
@@ -766,7 +1976,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E25BLK03F118": {
     "sku": "CPSPS2609E25BLK03F118",
@@ -780,7 +2012,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E25BRN04F118": {
     "sku": "CPSPS2609E25BRN04F118",
@@ -794,7 +2048,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E25GRN21F118": {
     "sku": "CPSPS2609E25GRN21F118",
@@ -808,7 +2084,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E25WHI03F118": {
     "sku": "CPSPS2609E25WHI03F118",
@@ -822,7 +2120,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E29BLK03F118": {
     "sku": "CPSPS2609E29BLK03F118",
@@ -836,7 +2156,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E29BRN04F118": {
     "sku": "CPSPS2609E29BRN04F118",
@@ -850,7 +2192,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E29GRN21F118": {
     "sku": "CPSPS2609E29GRN21F118",
@@ -864,7 +2228,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSPS2609E29WHI03F118": {
     "sku": "CPSPS2609E29WHI03F118",
@@ -878,7 +2264,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20GRN13G117": {
     "sku": "CP2ST2609S20GRN13G117",
@@ -892,7 +2300,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20PNK05G117": {
     "sku": "CP2ST2609S20PNK05G117",
@@ -906,7 +2336,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20GRY10G117": {
     "sku": "CP2ST2609S20GRY10G117",
@@ -920,7 +2372,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20VLT04G117": {
     "sku": "CP2ST2609S20VLT04G117",
@@ -934,7 +2408,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20RED04G117": {
     "sku": "CP2ST2609S20RED04G117",
@@ -948,7 +2444,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S24GRY10G117": {
     "sku": "CP2ST2609S24GRY10G117",
@@ -962,7 +2480,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S24VLT04G117": {
     "sku": "CP2ST2609S24VLT04G117",
@@ -976,7 +2516,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S24RED04G117": {
     "sku": "CP2ST2609S24RED04G117",
@@ -990,7 +2552,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S28GRY10G117": {
     "sku": "CP2ST2609S28GRY10G117",
@@ -1004,7 +2588,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S28VLT04G117": {
     "sku": "CP2ST2609S28VLT04G117",
@@ -1018,7 +2624,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20GRN13G118": {
     "sku": "CP2ST2609S20GRN13G118",
@@ -1032,7 +2660,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20PNK05G118": {
     "sku": "CP2ST2609S20PNK05G118",
@@ -1046,7 +2696,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20GRY10G118": {
     "sku": "CP2ST2609S20GRY10G118",
@@ -1060,7 +2732,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S20VLT04G118": {
     "sku": "CP2ST2609S20VLT04G118",
@@ -1074,7 +2768,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S22GRN13G118": {
     "sku": "CP2ST2609S22GRN13G118",
@@ -1088,7 +2804,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S22PNK05G118": {
     "sku": "CP2ST2609S22PNK05G118",
@@ -1102,7 +2840,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S22GRY10G118": {
     "sku": "CP2ST2609S22GRY10G118",
@@ -1116,7 +2876,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S22VLT04G118": {
     "sku": "CP2ST2609S22VLT04G118",
@@ -1130,7 +2912,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S26GRN13G118": {
     "sku": "CP2ST2609S26GRN13G118",
@@ -1144,7 +2948,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S26PNK05G118": {
     "sku": "CP2ST2609S26PNK05G118",
@@ -1158,7 +2984,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S26GRY10G118": {
     "sku": "CP2ST2609S26GRY10G118",
@@ -1172,7 +3020,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S26VLT04G118": {
     "sku": "CP2ST2609S26VLT04G118",
@@ -1186,7 +3056,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S26RED04G118": {
     "sku": "CP2ST2609S26RED04G118",
@@ -1200,7 +3092,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S30GRN13G118": {
     "sku": "CP2ST2609S30GRN13G118",
@@ -1214,7 +3128,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S30PNK05G118": {
     "sku": "CP2ST2609S30PNK05G118",
@@ -1228,7 +3164,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S30GRY10G118": {
     "sku": "CP2ST2609S30GRY10G118",
@@ -1242,7 +3200,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S30VLT04G118": {
     "sku": "CP2ST2609S30VLT04G118",
@@ -1256,7 +3236,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CP2ST2609S30RED04G118": {
     "sku": "CP2ST2609S30RED04G118",
@@ -1270,7 +3272,29 @@
     "stockout_days": 51,
     "calendar_span": 51,
     "status": "已下市",
-    "lifecycle": "未上市"
+    "lifecycle": "未上市",
+    "events": [
+      {
+        "start": "2026-09-07",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 51,
+        "span": 51,
+        "reason": "未上市",
+        "excluded": "未上市",
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 0,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 0,
+    "last_restock": null,
+    "excluded_reason": "未上市",
+    "last_days": 0,
+    "show_days": 0
   },
   "CPSSD2604S20GRN21F116": {
     "sku": "CPSSD2604S20GRN21F116",
@@ -1283,7 +3307,29 @@
     "last_stockout": "2026-10-16",
     "stockout_days": 3,
     "calendar_span": 39,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-09-08",
+        "end": "2026-10-17",
+        "last": "2026-10-16",
+        "days": 3,
+        "span": 39,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 3,
+    "last_restock": "2026-10-17",
+    "excluded_reason": null,
+    "last_days": 3,
+    "show_days": 3
   },
   "CP2ST2512S30GRN04G115": {
     "sku": "CP2ST2512S30GRN04G115",
@@ -1297,7 +3343,29 @@
     "stockout_days": 28,
     "calendar_span": 44,
     "status": "已停采",
-    "lifecycle": "停采"
+    "lifecycle": "停采",
+    "events": [
+      {
+        "start": "2026-09-14",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 28,
+        "span": 44,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 28,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 28,
+    "show_days": 28
   },
   "CP2ST2512S26PNK06G115": {
     "sku": "CP2ST2512S26PNK06G115",
@@ -1311,7 +3379,29 @@
     "stockout_days": 29,
     "calendar_span": 43,
     "status": "已停采",
-    "lifecycle": "停采"
+    "lifecycle": "停采",
+    "events": [
+      {
+        "start": "2026-09-15",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 29,
+        "span": 43,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 29,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 29,
+    "show_days": 29
   },
   "CPSSD2604S20BRN04F116": {
     "sku": "CPSSD2604S20BRN04F116",
@@ -1324,7 +3414,29 @@
     "last_stockout": "2026-10-16",
     "stockout_days": 10,
     "calendar_span": 32,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-09-15",
+        "end": "2026-10-17",
+        "last": "2026-10-16",
+        "days": 10,
+        "span": 32,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 10,
+    "last_restock": "2026-10-17",
+    "excluded_reason": null,
+    "last_days": 10,
+    "show_days": 10
   },
   "CP2ST2512S20PNK06G115": {
     "sku": "CP2ST2512S20PNK06G115",
@@ -1338,7 +3450,29 @@
     "stockout_days": 31,
     "calendar_span": 38,
     "status": "已停采",
-    "lifecycle": "停采"
+    "lifecycle": "停采",
+    "events": [
+      {
+        "start": "2026-09-20",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 31,
+        "span": 38,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 31,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 31,
+    "show_days": 31
   },
   "CPSPS2604E20WHI03F000": {
     "sku": "CPSPS2604E20WHI03F000",
@@ -1351,7 +3485,29 @@
     "last_stockout": "2026-09-24",
     "stockout_days": 1,
     "calendar_span": 1,
-    "status": "已恢复"
+    "status": "已恢复",
+    "events": [
+      {
+        "start": "2026-09-24",
+        "end": "2026-09-25",
+        "last": "2026-09-24",
+        "days": 1,
+        "span": 1,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 1,
+    "last_restock": "2026-09-25",
+    "excluded_reason": null,
+    "last_days": 1,
+    "show_days": 1
   },
   "DPCBP2411T20BRN07B000": {
     "sku": "DPCBP2411T20BRN07B000",
@@ -1364,9 +3520,31 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 10,
     "calendar_span": 20,
-    "status": "缺货中",
+    "status": "已恢复",
     "lifecycle": "在售",
-    "code": "6920411317402"
+    "code": "6920411317402",
+    "events": [
+      {
+        "start": "2026-10-08",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 10,
+        "span": 20,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 10,
+    "last_restock": "2026-10-28",
+    "excluded_reason": null,
+    "last_days": 10,
+    "show_days": 10
   },
   "LLT2I2603S00PNK06N027": {
     "sku": "LLT2I2603S00PNK06N027",
@@ -1381,7 +3559,29 @@
     "calendar_span": 19,
     "status": "已停采",
     "lifecycle": "停采",
-    "code": "6979918612930"
+    "code": "6979918612930",
+    "events": [
+      {
+        "start": "2026-10-09",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 19,
+        "span": 19,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 19,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 19,
+    "show_days": 19
   },
   "CBB28B1B1": {
     "sku": "CBB28B1B1",
@@ -1396,7 +3596,29 @@
     "calendar_span": 13,
     "status": "已停采",
     "lifecycle": "停采",
-    "code": "6920411302767"
+    "code": "6920411302767",
+    "events": [
+      {
+        "start": "2026-10-15",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 14,
+        "span": 13,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 14,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 14,
+    "show_days": 14
   },
   "CP2ST2512S26GRN04G115": {
     "sku": "CP2ST2512S26GRN04G115",
@@ -1410,7 +3632,29 @@
     "stockout_days": 13,
     "calendar_span": 13,
     "status": "已停采",
-    "lifecycle": "停采"
+    "lifecycle": "停采",
+    "events": [
+      {
+        "start": "2026-10-15",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 13,
+        "span": 13,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 13,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 13,
+    "show_days": 13
   },
   "DTFB22503E12BLU16B000": {
     "sku": "DTFB22503E12BLU16B000",
@@ -1425,7 +3669,29 @@
     "calendar_span": 8,
     "status": "已停采",
     "lifecycle": "停采",
-    "code": "6920411318669"
+    "code": "6920411318669",
+    "events": [
+      {
+        "start": "2026-10-20",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 7,
+        "span": 8,
+        "reason": "停采",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 7,
+    "last_restock": null,
+    "excluded_reason": null,
+    "last_days": 7,
+    "show_days": 7
   },
   "F016258601": {
     "sku": "F016258601",
@@ -1438,9 +3704,31 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 2,
     "calendar_span": 5,
-    "status": "缺货中",
+    "status": "已恢复",
     "lifecycle": "在售",
-    "code": "6920411308233"
+    "code": "6920411308233",
+    "events": [
+      {
+        "start": "2026-10-23",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 2,
+        "span": 5,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 2,
+    "last_restock": "2026-10-28",
+    "excluded_reason": null,
+    "last_days": 2,
+    "show_days": 2
   },
   "F016208601": {
     "sku": "F016208601",
@@ -1453,9 +3741,31 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 2,
     "calendar_span": 2,
-    "status": "缺货中",
+    "status": "已恢复",
     "lifecycle": "在售",
-    "code": "6920411308158"
+    "code": "6920411308158",
+    "events": [
+      {
+        "start": "2026-10-26",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 2,
+        "span": 2,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 2,
+    "last_restock": "2026-10-28",
+    "excluded_reason": null,
+    "last_days": 2,
+    "show_days": 2
   },
   "CPSPS2605E29GRN21F115": {
     "sku": "CPSPS2605E29GRN21F115",
@@ -1468,9 +3778,31 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 1,
     "calendar_span": 1,
-    "status": "缺货中",
+    "status": "已恢复",
     "lifecycle": "在售",
-    "code": "6979918614026"
+    "code": "6979918614026",
+    "events": [
+      {
+        "start": "2026-10-27",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 1,
+        "span": 1,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 1,
+    "last_restock": "2026-10-28",
+    "excluded_reason": null,
+    "last_days": 1,
+    "show_days": 1
   },
   "CPSSD2604S24BRN04F116": {
     "sku": "CPSSD2604S24BRN04F116",
@@ -1484,7 +3816,29 @@
     "last_stockout": "2026-10-27",
     "stockout_days": 1,
     "calendar_span": 1,
-    "status": "缺货中",
-    "lifecycle": "在售"
+    "status": "已恢复",
+    "lifecycle": "在售",
+    "events": [
+      {
+        "start": "2026-10-27",
+        "end": "2026-10-28",
+        "last": "2026-10-27",
+        "days": 1,
+        "span": 1,
+        "reason": "补货",
+        "excluded": null,
+        "source": "merged_legacy",
+        "approx": true,
+        "kf_min": null
+      }
+    ],
+    "episodes": 1,
+    "current_start": null,
+    "current_days": 0,
+    "total_days": 1,
+    "last_restock": "2026-10-28",
+    "excluded_reason": null,
+    "last_days": 1,
+    "show_days": 1
   }
 }

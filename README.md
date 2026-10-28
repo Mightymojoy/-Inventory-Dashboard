@@ -10,6 +10,8 @@ ITO 品牌电商库存日常管理看板。每日更新「库存-每日.xlsx」�
 | `build_inventory.py` | 构建脚本：读 Excel → 算指标 → 生成看板 |
 | `inventory_dashboard.html` | 看板模板（不含数据，供构建脚本嵌入数据） |
 | `inventory_data.json` | 最近一次构建的数据快照 |
+| `stockout_history.json` | 缺货档案（一 SKU 一条汇总，含「历次事件」数组） |
+| `stockout_events.json` | **缺货事件台账**（一 SKU 多事件，每次缺货一行，唯一事实源） |
 | `刷新库存看板.bat` | 每日一键刷新脚本（双击即可） |
 
 ## 使用方式
