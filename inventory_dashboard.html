@@ -435,7 +435,7 @@
         <th data-k="series" class="name">系列</th><th data-k="color">颜色</th><th data-k="size">尺寸</th>
         <th data-k="first">首次缺货</th><th data-k="restock">最近补货</th>
         <th data-k="show_days" class="num">缺货天数</th>
-        <th data-k="episodes" class="num">缺过次数</th>
+        <th data-k="episodes">历次缺货</th>
         <th data-k="level">当前状态</th>
       </tr></thead><tbody></tbody></table></div>
     </div>
@@ -551,7 +551,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* ===== 渲染 ===== */
   function render(){
-    document.getElementById('ver').textContent='v'+(DATA.version||'0.13.3');
+    document.getElementById('ver').textContent='v'+(DATA.version||'—');
     var modeTxt=EMBEDDED?'内置快照':(LIVE?'实时':'快照');
     document.getElementById('meta').innerHTML='数据日期 '+DATA.source_date+'<br>生成 '+DATA.generated_at+' · '+modeTxt;
     var srcBtn=document.getElementById('srcBtn');
@@ -673,6 +673,40 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var q=r.arrival_qty;
     if(!q) return '-';
     return q+(n>1?'<i class="bc">('+n+'批)</i>':'');
+  }
+
+  /* ===== 历次缺货（2026-10-28 v0.13.6）=====
+     一轮缺货 = 起→止（N天）· 结束原因。数据源为 stockout_history[sku].events。
+     单轮直接内联；多轮用 <details> 折叠，summary 给「最近一轮 + 共N次」，
+     与到货分批同一套交互（stopPropagation，点击不触发 openDetail 抽屉）。
+     「合并」标 = 2026-10-28 之前历史档案迁移的合并区间，不可用于单次评估。 */
+  function stkCell(r){
+    var evs=(r.events||[]).slice().sort(function(a,b){
+      return String(a.start||'').localeCompare(String(b.start||''));
+    });
+    var d2=function(s){return String(s||'').replace(/^\d{4}-/,'');};
+    if(!evs.length) return '<span style="color:#b9b3a7">-</span>';
+    var openTxt='<span style="color:#d9534f">仍缺货</span>';
+    var days=function(e){return '<b style="font-variant-numeric:tabular-nums">'+(e.days==null?0:e.days)+'天</b>';};
+    var last=evs[evs.length-1];
+    var span=function(e){return d2(e.start)+'→'+(e.end?d2(e.end):openTxt);};
+    /* 已排除（未上市）记录：事件里的 days 是排除前的历史合并跨度，与「缺货天数 0 天」
+       并存会自相矛盾，故只显示区间并标「不计」，不冒充缺货天数。 */
+    if(r.excluded){
+      return '<span style="color:#8b8f96">'+span(last)+'</span> <i class="bc">不计</i>';
+    }
+    if(evs.length===1){
+      return span(last)+' '+days(last)+(last.approx?' <i class="bc">合并</i>':'');
+    }
+    var line=function(e,i){
+      return '<span style="color:#8b8f96">#'+(i+1)+'</span> '+span(e)+' '+days(e)
+        +(e.reason?' <span style="color:#8b8f96;font-size:10.5px">· '+e.reason+'</span>':'')
+        +(e.approx?' <i class="bc">合并</i>':'');
+    };
+    return '<details class="bt" onclick="event.stopPropagation()"><summary>'
+      +'<span class="bth">'+span(last)+'</span>'
+      +'<i class="btn2">共'+evs.length+'次</i></summary>'
+      +'<div class="btl">'+evs.map(line).join('<br>')+'</div></details>';
   }
 
   function renderAlert(){
@@ -968,7 +1002,9 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         cur_start:r.current_start||null, cur_days:r.current_days||0,
         excluded:r.excluded_reason||null,
         level:r.status, status:r.status,
-        lifecycle:r.lifecycle||'在售'
+        lifecycle:r.lifecycle||'在售',
+        /* 2026-10-28 v0.13.6：携带逐次事件，供「历次缺货」列展开 */
+        events:r.events||[]
       };
     });
     /* 未上市商品属旧口径误登记：默认不进主表，勾选「含未上市」才显示 */
@@ -983,7 +1019,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       sortBy:'first',
       defaultSub:'缺货记录 '+rows.length+' 条'
         +(nEx&&!withEx?(' · 已排除 '+nEx+' 条未上市（勾选「含未上市」可查看）'):'')
-        +' · 每次刷新自动累积事件，同一 SKU 多次缺货各记一条',
+        +' · 每次刷新自动累积事件，「历次缺货」列可展开看每一轮起止与结束原因',
       cols:[
         {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||'在售');}},
         {k:'series',cls:'name'},
@@ -994,9 +1030,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
           if(r.level==='缺货中') return '<b style="color:#d9534f">'+r.show_days+' 天</b>';
           return r.show_days+' 天';
         }},
-        {k:'episodes',cls:'num',f:function(r){
-          return r.episodes>1?('<b>'+r.episodes+' 次</b>'):(r.episodes+' 次');
-        }},
+        {k:'episodes',f:function(r){return stkCell(r);}},
         {k:'level',f:function(r){
           if(r.excluded) return '<span class="pill" style="background:#5b7fa6">已排除·'+r.excluded+'</span>';
           var c=SO_COLOR[r.level]||'#8b8f96';
