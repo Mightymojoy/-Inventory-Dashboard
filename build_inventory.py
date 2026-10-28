@@ -868,7 +868,7 @@ def compute(path=XLSX_PATH):
         })
 
     result = {
-        "version": "0.13.6",
+        "version": "0.13.7",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
@@ -1045,6 +1045,7 @@ def _attach_events_to_history(hist, events):
             "start": e.get("start_date"), "end": e.get("end_date"),
             "last": e.get("last_stockout"),
             "days": e.get("days"), "span": e.get("span"),
+            "gaps": e.get("gaps"),
             "reason": e.get("end_reason"), "excluded": e.get("excluded"),
             "source": e.get("source"), "approx": bool(e.get("date_approx")),
             "kf_min": e.get("kf_min"),

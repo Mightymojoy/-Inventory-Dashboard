@@ -675,11 +675,20 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     return q+(n>1?'<i class="bc">('+n+'批)</i>':'');
   }
 
-  /* ===== 历次缺货（2026-10-28 v0.13.6）=====
+  /* ===== 历次缺货（2026-10-28 v0.13.7）=====
      一轮缺货 = 起→止（N天）· 结束原因。数据源为 stockout_history[sku].events。
-     单轮直接内联；多轮用 <details> 折叠，summary 给「最近一轮 + 共N次」，
-     与到货分批同一套交互（stopPropagation，点击不触发 openDetail 抽屉）。
-     「合并」标 = 2026-10-28 之前历史档案迁移的合并区间，不可用于单次评估。 */
+
+     v0.13.7 起**所有记录都可点开**（与「到货日期」分批列完全同一套 <details> 交互）：
+       summary  : 最近一轮区间 + 徽标（单轮给天数，多轮给「共N次」）
+       展开明细 : 逐轮列出「YYYY-MM-DD 起 → YYYY-MM-DD 补回，N天 · 结束原因」
+     v0.13.6 时单轮是纯内联、点不开，用户误以为「没有记录每次缺货时间」。
+
+     · 未闭合 → 「仍缺货」红字，不写结束日
+     · gaps>0 → 追加「中途有货N天」，解释「区间 40 天却只缺 3 天」不是算错
+     · approx → 「合并记录」：2026-10-28 前历史档案迁移的合并区间，不可用于单次评估
+     · 已排除（未上市）不折叠：只给区间 + 「不计」，避免被读成有效缺货
+
+     交互与到货分批一致：stopPropagation，点开不会触发 openDetail 抽屉。 */
   function stkCell(r){
     var evs=(r.events||[]).slice().sort(function(a,b){
       return String(a.start||'').localeCompare(String(b.start||''));
@@ -687,26 +696,30 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var d2=function(s){return String(s||'').replace(/^\d{4}-/,'');};
     if(!evs.length) return '<span style="color:#b9b3a7">-</span>';
     var openTxt='<span style="color:#d9534f">仍缺货</span>';
-    var days=function(e){return '<b style="font-variant-numeric:tabular-nums">'+(e.days==null?0:e.days)+'天</b>';};
     var last=evs[evs.length-1];
     var span=function(e){return d2(e.start)+'→'+(e.end?d2(e.end):openTxt);};
     /* 已排除（未上市）记录：事件里的 days 是排除前的历史合并跨度，与「缺货天数 0 天」
-       并存会自相矛盾，故只显示区间并标「不计」，不冒充缺货天数。 */
+       并存会自相矛盾，故只显示区间并标「不计」，不冒充缺货天数，也不提供展开。 */
     if(r.excluded){
       return '<span style="color:#8b8f96">'+span(last)+'</span> <i class="bc">不计</i>';
     }
-    if(evs.length===1){
-      return span(last)+' '+days(last)+(last.approx?' <i class="bc">合并</i>':'');
-    }
+    /* 展开明细：每轮一行，给完整年月日（跨年也不会歧义）+ 天数 + 结束原因 */
     var line=function(e,i){
-      return '<span style="color:#8b8f96">#'+(i+1)+'</span> '+span(e)+' '+days(e)
-        +(e.reason?' <span style="color:#8b8f96;font-size:10.5px">· '+e.reason+'</span>':'')
-        +(e.approx?' <i class="bc">合并</i>':'');
+      var d=Number(e.days==null?0:e.days), sp=Number(e.span||0), gp=Number(e.gaps||0);
+      var tail=e.end?('<b>'+String(e.end)+'</b> 补回'):openTxt;
+      var extra='，<b>'+d+'天</b>';
+      if(e.reason) extra+=' · '+e.reason;
+      if(sp>d&&gp>0) extra+=' · 中途有货'+gp+'天';
+      else if(sp&&sp!==d) extra+=' · 区间'+sp+'天';
+      if(e.approx) extra+=' · 合并记录';
+      return (evs.length>1?'<span style="color:#8b8f96">#'+(i+1)+'</span> ':'')
+        +'<b>'+String(e.start||'')+'</b> 起 → '+tail+extra;
     };
+    var badge=evs.length>1?('共'+evs.length+'次'):((last.days==null?0:last.days)+'天');
+    var approxTag=(evs.length===1&&last.approx)?' <i class="bc">合并</i>':'';
     return '<details class="bt" onclick="event.stopPropagation()"><summary>'
-      +'<span class="bth">'+span(last)+'</span>'
-      +'<i class="btn2">共'+evs.length+'次</i></summary>'
-      +'<div class="btl">'+evs.map(line).join('<br>')+'</div></details>';
+      +'<span class="bth">'+span(last)+'</span><i class="btn2">'+badge+'</i>'+approxTag
+      +'</summary><div class="btl">'+evs.map(line).join('<br>')+'</div></details>';
   }
 
   function renderAlert(){
@@ -1019,7 +1032,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       sortBy:'first',
       defaultSub:'缺货记录 '+rows.length+' 条'
         +(nEx&&!withEx?(' · 已排除 '+nEx+' 条未上市（勾选「含未上市」可查看）'):'')
-        +' · 每次刷新自动累积事件，「历次缺货」列可展开看每一轮起止与结束原因',
+        +' · 点「历次缺货」栏可展开看每一轮的开始/补回日期、缺货天数与结束原因',
       cols:[
         {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||'在售');}},
         {k:'series',cls:'name'},
