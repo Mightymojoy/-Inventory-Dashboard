@@ -4,9 +4,10 @@
     "created": "2026-10-28",
     "note": "一 SKU 多事件；merged_legacy=旧合并记录迁移，days/span 不可用于单次评估",
     "build_dates": [
-      "2026-10-28"
+      "2026-10-28",
+      "2026-10-29"
     ],
-    "last_build": "2026-10-28",
+    "last_build": "2026-10-29",
     "event_count": 107,
     "open_count": 0,
     "excluded_count": 72

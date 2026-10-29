@@ -121,6 +121,15 @@
   padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);white-space:nowrap}
 .chk-inline:hover{border-color:var(--gold);color:var(--gold-deep)}
 .chk-inline input{accent-color:var(--gold-deep);cursor:pointer;margin:0}
+/* 显示范围分段（2026-10-29 v0.13.8）：当前在缺 / 历史 / 全部 */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;border-right:1px solid var(--line);background:transparent;padding:7px 11px;
+  font:inherit;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--gold-deep)}
+.seg button.on{background:var(--gold-deep);color:#fff}
+.seg button i{font-style:normal;opacity:.8;margin-left:3px;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,Consolas,'Courier New',monospace;font-size:11px;color:var(--muted);letter-spacing:-.2px}
 .so-ev{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
 .so-ev .hd{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .so-ev .hd .tag{font-weight:500;font-size:11.5px;color:var(--muted);background:var(--line2);padding:1px 8px;border-radius:10px}
@@ -405,6 +414,14 @@
     <div class="card">
       <div class="cat-filter">
         <div class="filter-item">
+          <label>显示范围</label>
+          <div class="seg" id="soScope">
+            <button type="button" data-scope="active" class="on">当前在缺<i id="soScopeAct">0</i></button>
+            <button type="button" data-scope="hist">历史记录<i id="soScopeHist">0</i></button>
+            <button type="button" data-scope="all">全部<i id="soScopeAll">0</i></button>
+          </div>
+        </div>
+        <div class="filter-item">
           <label>生命周期</label>
           <select id="soLife"><option value="__all__">全部</option></select>
         </div>
@@ -433,6 +450,7 @@
       <div style="overflow-x:auto;margin-top:14px"><table id="soTable"><thead><tr>
         <th data-k="lifecycle">生命周期</th>
         <th data-k="series" class="name">系列</th><th data-k="color">颜色</th><th data-k="size">尺寸</th>
+        <th data-k="code">商品编码</th>
         <th data-k="first">首次缺货</th><th data-k="restock">最近补货</th>
         <th data-k="show_days" class="num">缺货天数</th>
         <th data-k="episodes">历次缺货</th>
@@ -562,6 +580,15 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     /* 缺货明细「含未上市」开关（2026-10-28）：用 onclick 赋值，避免多次 load 重复绑定 */
     var soChk=document.getElementById('soInclExcluded');
     if(soChk) soChk.onchange=function(){renderStockout();};
+    /* 缺货明细「显示范围」分段（2026-10-29 v0.13.8）：当前在缺 / 历史记录 / 全部
+       用事件委托绑定，多次 load 不会重复挂载 */
+    var soSeg=document.getElementById('soScope');
+    if(soSeg) soSeg.onclick=function(e){
+      var b=e.target&&e.target.closest?e.target.closest('button[data-scope]'):null;
+      if(!b) return;
+      SO_SCOPE=b.getAttribute('data-scope');
+      renderStockout();
+    };
     document.getElementById('ovSub').textContent='在售 '+DATA.kpi.stocked_sku+' SKU · 定制 '+DATA.kpi.custom_sku
       +' · 停采 '+DATA.kpi.discontinued_sku+' · 未上市 '+DATA.kpi.upcoming_sku;
   }
@@ -639,7 +666,12 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     var tbody=tb.querySelector('tbody');var cols=tbody._cols;var rows=tbody._rows.slice();
     var k=tbody._sort,a=tbody._asc?1:-1;
     rows.sort(function(x,y){var v1=x[k],v2=y[k];if(v1==null)v1=-1e9;if(v2==null)v2=-1e9;if(typeof v1==='string')return v1.localeCompare(v2,'zh')*a;return (v1-v2)*a;});
-    tbody.innerHTML=rows.map(function(r){var click=r._click?' onclick="openDetail(\''+r._id+'\')" style="cursor:pointer"':'';return '<tr'+click+'>'+cols.map(function(c){return '<td class="'+(c.cls||'')+'">'+(c.f?c.f(r):(r[c.k]!=null?r[c.k]:'-'))+'</td>';}).join('')+'</tr>';}).join('');
+    /* 空态（2026-10-29 v0.13.8）：「当前在缺」在无缺货时是常态，不能让表格空白一片 */
+    if(!rows.length){
+      tbody.innerHTML='<tr><td colspan="'+cols.length+'" class="empty">'+(tbody._empty||'无数据')+'</td></tr>';
+    }else{
+      tbody.innerHTML=rows.map(function(r){var click=r._click?' onclick="openDetail(\''+r._id+'\')" style="cursor:pointer"':'';return '<tr'+click+'>'+cols.map(function(c){return '<td class="'+(c.cls||'')+'">'+(c.f?c.f(r):(r[c.k]!=null?r[c.k]:'-'))+'</td>';}).join('')+'</tr>';}).join('');
+    }
     // 排序表头
     tb.querySelectorAll('th').forEach(function(th){var key=th.getAttribute('data-k');if(key)th.onclick=function(){if(tbody._sort===key)tbody._asc=!tbody._asc;else{tbody._sort=key;tbody._asc=true;}paint(tb);};});
   }
@@ -939,6 +971,8 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       });
       rows.forEach(function(r){r._id=r.code;r._click=true;});
       var tb=document.getElementById(opts.tableId);tb.querySelector('tbody')._all=rows;
+      /* 空态文案由调用方给（v0.13.8：缺货明细「当前在缺」为空是常态，需要说明） */
+      tb.querySelector('tbody')._empty=opts.emptyText||'';
       buildTable(opts.tableId,rows,opts.cols,opts.sortBy||opts.cols[0].k);
       var el=document.getElementById(opts.countId);
       if(el) el.textContent=rows.length+' 条';
@@ -996,7 +1030,10 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   /* 缺货明细记录（2026-08-25）：series/color/size、首次/末次、累计天数、日历跨度、状态
      2026-10-27：新增「生命周期」列与筛选。停采/未上市不再计入缺货，
-     历史挂账按生命周期定性为「已停采」/「已下市」，记录保留可追溯。 */
+     历史挂账按生命周期定性为「已停采」/「已下市」，记录保留可追溯。
+     2026-10-29 v0.13.8：按「当前在缺 / 历史记录」分区（分段切换，默认只看在缺），
+       并新增「商品编码」列 —— LLT2I2603S00PNK06N027 / N028 系列/颜色/尺寸全同，原表分不清。 */
+  var SO_SCOPE='active';
   function renderStockout(){
     var hist=DATA.stockout_history||{};
     var chk=document.getElementById('soInclExcluded');
@@ -1022,25 +1059,54 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     });
     /* 未上市商品属旧口径误登记：默认不进主表，勾选「含未上市」才显示 */
     var nEx=all.filter(function(x){return !!x.excluded;}).length;
-    var rows=withEx?all:all.filter(function(x){return !x.excluded;});
+    var pool=withEx?all:all.filter(function(x){return !x.excluded;});
+    /* 分区判据以事件层为准：current_start 非空 = 有未闭合事件 = 当前仍在缺；
+       status 仅作旧档案兜底（无 events 的历史记录） */
+    var isAct=function(x){return !!x.cur_start||x.level==='缺货中';};
+    var act=pool.filter(isAct);
+    var past=pool.filter(function(x){return !isAct(x);});
+    var nRest=past.filter(function(x){return x.level!=='已停采';}).length;
+    var nOff=past.filter(function(x){return x.level==='已停采';}).length;
+    var sc=function(id,n){var e=document.getElementById(id);if(e)e.textContent=n;};
+    sc('soScopeAct',act.length);sc('soScopeHist',past.length);sc('soScopeAll',pool.length);
+    var btns=document.querySelectorAll('#soScope button');
+    for(var bi=0;bi<btns.length;bi++){
+      btns[bi].className=(btns[bi].getAttribute('data-scope')===SO_SCOPE)?'on':'';
+    }
+    var rows=SO_SCOPE==='active'?act:(SO_SCOPE==='hist'?past:pool);
     var SO_COLOR={'缺货中':'#d9534f','已恢复':'#3a9d6e','已停采':'#8b8f96','已下市':'#5b7fa6'};
+    var subTxt, emptyTxt;
+    if(SO_SCOPE==='active'){
+      subTxt='当前在售缺货中 '+act.length+' 条 · 点「历次缺货」栏可展开看每一轮的开始/补回日期与天数';
+      emptyTxt='当前无缺货中的在售 SKU'
+        +(past.length?('　（另有历史记录 '+past.length+' 条：已恢复 '+nRest+' 条'
+          +(nOff?'、已停采 '+nOff+' 条':'')+'，切到「历史记录」可查看）'):'');
+    }else if(SO_SCOPE==='hist'){
+      subTxt='历史记录 '+past.length+' 条（已恢复 '+nRest+' 条'+(nOff?' · 已停采 '+nOff+' 条':'')
+        +'）· 已闭合的轮次不会被后续刷新覆盖，长期保留可追溯';
+      emptyTxt='暂无历史缺货记录';
+    }else{
+      subTxt='全部 '+pool.length+' 条（当前在缺 '+act.length+' · 历史 '+past.length+'）';
+      emptyTxt='暂无缺货记录';
+    }
+    if(nEx) subTxt+=' · 已排除 '+nEx+' 条未上市'+(withEx?'（已显示）':'（勾选「含未上市」可查看）');
     makeFilterTable(rows,{
       catId:'soCat', seriesId:'soSeries', statusId:'soStatus',
       statusOptions:['缺货中','已恢复','已停采','已下市'],
       lifeId:'soLife', lifeOptions:['在售','停采','未上市'],
       searchId:'soSearch', tableId:'soTable', countId:'soCount', subId:'soSub',
       sortBy:'first',
-      defaultSub:'缺货记录 '+rows.length+' 条'
-        +(nEx&&!withEx?(' · 已排除 '+nEx+' 条未上市（勾选「含未上市」可查看）'):'')
-        +' · 点「历次缺货」栏可展开看每一轮的开始/补回日期、缺货天数与结束原因',
+      defaultSub:subTxt,
+      emptyText:emptyTxt,
       cols:[
         {k:'lifecycle',f:function(r){return pillLife(r.lifecycle||'在售');}},
         {k:'series',cls:'name'},
         {k:'color'},{k:'size'},
+        {k:'code',cls:'mono'},
         {k:'first'},
         {k:'restock',f:function(r){return r.restock==='-'?'<span style="color:#b9b3a7">-</span>':r.restock;}},
         {k:'show_days',cls:'num',f:function(r){
-          if(r.level==='缺货中') return '<b style="color:#d9534f">'+r.show_days+' 天</b>';
+          if(isAct(r)) return '<b style="color:#d9534f">'+r.show_days+' 天</b>';
           return r.show_days+' 天';
         }},
         {k:'episodes',f:function(r){return stkCell(r);}},
@@ -1051,11 +1117,11 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         }}
       ],
       summary:function(rows){
-        var act=rows.filter(function(r){return r.level==='缺货中';}).length;
+        var a=rows.filter(isAct).length;
         var off=rows.filter(function(r){return r.level==='已停采';}).length;
         var gone=rows.filter(function(r){return r.excluded;}).length;
         var el=document.getElementById('soStat');
-        if(el) el.textContent='缺货中 '+act+' 条'+(off?' · 已停采 '+off:'')+(gone?' · 已排除 '+gone:'');
+        if(el) el.textContent='在缺 '+a+' 条'+(off?' · 已停采 '+off:'')+(gone?' · 已排除 '+gone:'');
       }
     });
   }
