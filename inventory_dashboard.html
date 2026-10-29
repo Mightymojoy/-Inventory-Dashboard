@@ -602,7 +602,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'仅计在售商品',cls:'alert'},
       {ic:'alert',v:k.warning,l:'预警 SKU',s:'急需+风险',cls:'warn'},
       {ic:'layers',v:k.discontinued_sku,l:'停采 SKU',s:'分类停采+人工名单·'+(k.discontinued_has_stock||0)+'个仍有货',cls:'off'},
-      {ic:'layers',v:k.upcoming_sku,l:'未上市 SKU',s:'FIND ITO+人工名单，不计缺货',cls:'off'},
+      {ic:'layers',v:k.upcoming_sku,l:'未上市 SKU',s:'FIND ITO+人工名单+首批未到，不计缺货',cls:'off'},
       {ic:'truck',v:fmt(k.in_transit),l:'在途总量',s:'采+产+调拨'},
       {ic:'truck',v:fmt(k.arrival_week),l:'未来一周到货',s:'提货计划'},
       {ic:'box',v:k.custom_sku,l:'定制(按需)SKU',s:'可发=0 属正常'}
@@ -1141,6 +1141,18 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       +'③ '+((lr.renewed_series||[]).map(function(x){return x.series+'（'+x.colors.join('/')+'）';}).join('、')||'PISTACHIO STRIPED（炭黑/烟白）')
       +' 名称带 <code>'+(lr.year_mark||'2026')+'</code>版 或 <code>TRUNK</code> → 新版·在售，两者都没有 → 旧版·停采；'
       +'④ 分类以「停采」开头 → <b>停采</b>。</p>';
+    /* 上市前「首批货未到仓」闸门（2026-10-29） */
+    var pl=(lr.upcoming_prelaunch||[]);
+    html+='<p><b>首批未到 ≠ 缺货</b>（2026-10-29 新增）：新品在 ERP 已建 SKU、首批货还没到仓时，'
+      +'可发为 0/负、名称也不带 FIND ITO，旧口径会误判成「在售·缺货」并持续累计缺货天数。'
+      +'现改为：<b>该 SKU 在『入库明细同步』全部批次中从无到货记录、且同系列其他 SKU 已有到货、且无在途</b>'
+      +' → 判 <b>未上市·首批未到</b>，不计缺货。';
+    if(pl.length){
+      html+='<br>当前命中 '+pl.length+' 个：'+pl.map(function(x){
+        return (x.series||'')+' '+(x.color||'')+(x.size||'');
+      }).join('、')+'。';
+    }
+    html+='</p>';
     html+='<p><b>货值口径</b>：按零售价（数据源固定成本价为 0，不可用）。<b>在售分类</b>：'+((c.on_sale||[]).join('、'))+'。</p>';
     html+='<p><b>数据铁律</b>：看板仅读取 Excel，绝不回写；无数据不展示；对照源表逐项核对。</p>';
     document.getElementById('setBody').innerHTML=html;

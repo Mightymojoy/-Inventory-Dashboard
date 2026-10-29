@@ -477,6 +477,125 @@ def load_arrival_progress(path=ARRIVAL_SYNC_XLSX):
     }
 
 
+# ---------------- 上市前「首批货未到仓」闸门（2026-10-29 新增） ----------------
+# 起因：PISTACHIO 2 STRIPED 柔雾棕/琥珀粉/月光紫 × 20/26/30 共 9 个 SKU，
+#   2026-08-25 起被判「在售 + 缺货」（ERP 已建 SKU、首批货还没到，可发=0/负），
+#   一直记到 09-04~09-08 首批到货才闭合，凭空多出 5~17 天/个的缺货账；
+#   而该系列 2026-09-15 才上市 —— 整段「缺货」发生在上市之前，是等首批到货，不是缺货。
+#   老大 2026-10-29：「这个不是缺货，因为刚上市 库存还未到货，所以不能记录到缺货中」
+#   （历史 9 条已用 _fix_pistachio2_prelaunch.py 清除，本闸门防复发）
+#
+# 判据（四条全中才改判，宁可漏判不可误判）：
+#   1) level == 缺货（在售 且 可发 ≤ 0）
+#   2) 该 SKU 在『入库明细同步』全部批次里**从未出现过**（从没到过货）
+#   3) 同系列至少 1 个**其他** SKU 出现过（说明该系列有正常到货流程）
+#      —— 这条是防误伤的关键：LUGGAGE TAG / COSMETIC BAG / PORCINI BACKPACK
+#         这类本来就不进入库明细的品类，系列内兄弟也全无记录，因此不会被改判。
+#         回测（2026-10-29）：历史 6 条「无入库记录」的在售缺货 SKU，所在系列兄弟
+#         命中数分别为 0/9、0/3、0/4、0/40 —— 全部 0，闸门 0 误伤。
+#   4) 在途量 = 0（有在途说明已下单在途，属正常补货等待，不该判未上市）
+ARRIVAL_GATE_STALE_DAYS = 7
+
+
+def load_arrival_first_seen(path=None):
+    """扫『入库明细同步.xlsx』全部 MMDD 批次 sheet 的第一列（货品编码），
+    返回 ({编码: 首笔入库日 'YYYY-MM-DD'}, 最新批次日期)。无文件/无批次返回 (None, None)。
+
+    坑：read_only=True 时 openpyxl 直接相信 Excel 里那份过期 dimension，
+    会把有数据的 sheet 报成 max_row=1、整表读成空（实测 0615 等正如此），
+    所以必须用普通模式打开。
+    """
+    path = path or ARRIVAL_SYNC_XLSX
+    if not os.path.exists(path):
+        return None, None
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True)
+    except Exception as e:
+        print("[warn] 读取入库明细同步失败:", e, file=sys.stderr)
+        return None, None
+    first, latest = {}, None
+    for name in wb.sheetnames:
+        if not name or not re.fullmatch(r"\d{4}", name):
+            continue
+        try:
+            d = datetime.date(TODAY.year, int(name[:2]), int(name[2:4])).isoformat()
+        except ValueError:
+            continue
+        if latest is None or d > latest:
+            latest = d
+        for row in wb[name].iter_rows(values_only=True):
+            v = row[0] if row else None
+            if not v:
+                continue
+            c = str(v).strip()
+            if not c or c == "货品编码":
+                continue
+            if c not in first or d < first[c]:
+                first[c] = d
+    return first, latest
+
+
+def apply_prelaunch_gate(skus, arrival_path=None, stale_days=None, catalog=None):
+    """把「首批货从未到仓」的伪缺货改判为未上市，返回改判明细（供日志/页面说明）。
+
+    stale_days 仅供测试注入（模拟历史视角时，入库明细必然是「旧」的）。
+    catalog 传入时同步改判：商品总览与缺货口径必须一致，否则会出现
+    「总览说在售、缺货清单里没有、未上市也不含它」的三方打架。
+    """
+    if stale_days is None:
+        stale_days = ARRIVAL_GATE_STALE_DAYS
+    first, latest = load_arrival_first_seen(arrival_path)
+    if not first:
+        print("[info] 上市前闸门: 无入库明细或无批次 sheet，跳过", file=sys.stderr)
+        return []
+    try:
+        stale = (TODAY - datetime.date.fromisoformat(latest)).days
+    except Exception:
+        stale = None
+    if stale is None or stale > stale_days:
+        print("[warn] 上市前闸门: 入库明细最新批次 %s（%s 天前）超过 %d 天，本次不启用（避免旧数据误判）"
+              % (latest, stale, stale_days), file=sys.stderr)
+        return []
+
+    by_series = {}
+    for s in skus:
+        by_series.setdefault(s.get("series") or "", []).append(s)
+
+    changed = []
+    for s in skus:
+        if s.get("level") != "缺货" or s.get("lifecycle") != LIFE_ON_SALE:
+            continue
+        if (s.get("sku") or "") in first:
+            continue                      # 到过货 → 真实缺货，不动
+        if float(s.get("in_transit") or 0) > 0:
+            continue                      # 有在途 → 正常补货等待
+        sibs = [x for x in by_series.get(s.get("series") or "", [])
+                if x is not s and (x.get("sku") or "") in first]
+        if not sibs:
+            continue                      # 系列整体不进入库明细 → 不敢判，保守放过
+        s["lifecycle"] = LIFE_UPCOMING
+        s["lifecycle_reason"] = ("首批货未到仓（入库明细无该 SKU 任何到货记录，"
+                                 "同系列已有 %d 个到货）" % len(sibs))
+        s["level"] = LIFE_UPCOMING
+        changed.append(s)
+
+    if changed:
+        print("[ok] 上市前闸门: %d 个 SKU 判为未上市·首批未到（不计缺货）→ %s"
+              % (len(changed), "、".join(
+                  "%s/%s%s" % (x.get("series"), x.get("color"), x.get("size")) for x in changed)),
+              file=sys.stderr)
+        # 商品总览同步（catalog 是独立用 detect_lifecycle 判的，不同步就会自相矛盾）
+        if catalog:
+            by_sku = {x.get("sku"): x for x in changed}
+            for c in catalog:
+                t = by_sku.get(c.get("sku"))
+                if t:
+                    c["status"] = LIFE_UPCOMING
+                    c["lifecycle"] = LIFE_UPCOMING
+                    c["lifecycle_reason"] = t.get("lifecycle_reason") or ""
+    return changed
+
+
 def compute(path=XLSX_PATH):
     wb = openpyxl.load_workbook(path, data_only=True)
     has_matching = "匹配表（勿删）" in wb.sheetnames
@@ -748,6 +867,11 @@ def compute(path=XLSX_PATH):
     else:
         print("[info] 未检测到到货进度数据（入库明细同步 / 供应链提货计划表），到货日历不可用", file=sys.stderr)
 
+    # ===== 2.5 上市前「首批货未到仓」闸门（2026-10-29）=====
+    # 必须在汇总指标之前跑：改判后 lifecycle/level 变了，缺货 KPI、生命周期分解、
+    # 事件台账（只认在售）都要按改判后的结果算，否则闸门等于没生效。
+    prelaunch_gate = apply_prelaunch_gate(skus, catalog=catalog)
+
     # ===== 3. 汇总指标 =====
     # 生命周期计数（2026-10-27）：缺货 / 预警只可能由「在售」产生
     life_cnt = {lv: 0 for lv in LIFE_ORDER}
@@ -894,6 +1018,11 @@ def compute(path=XLSX_PATH):
             "life_rules": {
                 "upcoming_mark": UPCOMING_MARK,
                 "upcoming_extra": [{"frag": f, "why": w} for f, w in UPCOMING_EXTRA],
+                "upcoming_prelaunch": [
+                    {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),
+                     "size": x.get("size"), "why": x.get("lifecycle_reason")}
+                    for x in prelaunch_gate
+                ],
                 "discontinued_prefix": "停采",
                 "basis": "ERP 分类字段：停采* → 停采，其余在售分类 → 在售",
             },
@@ -906,6 +1035,11 @@ def compute(path=XLSX_PATH):
         "catalog": catalog,
         "accessories": accessories,
         "skus": skus,
+        "prelaunch_gate": [
+            {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),
+             "size": x.get("size"), "cat": x.get("cat"), "kf": x.get("kf"),
+             "why": x.get("lifecycle_reason")} for x in prelaunch_gate
+        ],
     }
     return result
 
