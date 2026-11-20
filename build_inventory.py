@@ -1062,7 +1062,7 @@ def compute(path=XLSX_PATH):
         })
 
     result = {
-        "version": "0.13.9",
+        "version": "0.13.10",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
