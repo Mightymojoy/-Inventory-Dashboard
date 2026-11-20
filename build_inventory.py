@@ -416,6 +416,78 @@ def find_source_sheet(wb):
     return wb.sheetnames[0]
 
 
+# 配件/赠品兜底源（2026-11-20 新增）
+# 旧源表 库存-每日.xlsx 已退化：仅导 6 个正品分类（367 行），停采/配件/赠品/包材等分类全部缺失。
+# 结果页面「配件赠品」tab 归零（10-27~10-28 备份仍有 475 条）。改从 ERP 全量导出补这两类。
+ACC_FULL_EXPORT = os.path.join(OUT_DIR, "库存-每日-新.xlsx")
+ACC_CATS = ("旅行箱配件", "停采旅行箱配件", "赠品", "停采赠品")
+ACC_VIRTUAL_KEYS = ("虚拟卡券", "补运费")   # 非实物占位，可用库存为百万级大数
+
+
+def load_accessories_from_full_export(path=None):
+    """配件/赠品取数（2026-11-20）：只补配件赠品，正品 SKU 仍读旧表，缺货/货值口径不变。
+
+    字段映射经实证对齐（两表交集 367 个 SKU 逐条比对，计数为实测非推测）：
+        旧「可发库存」 ≡ 新「可用库存」   367/367 相等
+        旧「库存」     ≡ 新「正品库存」   367/367 相等
+    剔除虚拟卡券：如「ITO 虚拟卡券 补运费系列 赠品」可用库存 9,235,895，
+    是卡券不是实物，计入会让配件赠品库存虚高两个数量级。
+
+    返回 list；文件缺失 / 表头不符返回 None（调用方降级为「无配件赠品数据」）。
+    """
+    p = path or ACC_FULL_EXPORT
+    if not os.path.exists(p):
+        return None
+    try:
+        wb = openpyxl.load_workbook(p, data_only=True)
+    except Exception as e:
+        print("[warn] 配件赠品源打开失败 %s: %s" % (os.path.basename(p), e), file=sys.stderr)
+        return None
+    ws = wb[wb.sheetnames[0]]
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return None
+    hdr = [str(c or "").strip() for c in rows[0]]
+    need = ["货品分类", "货品名称", "商家编码", "货品简称", "品牌", "零售价", "可用库存", "正品库存"]
+    miss = [k for k in need if k not in hdr]
+    if miss:
+        print("[warn] 配件赠品源表头缺列 %s，跳过（不静默产出错误数字）" % miss, file=sys.stderr)
+        return None
+    ix = {k: hdr.index(k) for k in need}
+    ix["货品编码"] = hdr.index("货品编码") if "货品编码" in hdr else None
+
+    out, n_virtual = [], 0
+    for r in rows[1:]:
+        cat = str(r[ix["货品分类"]] or "").strip()
+        if cat not in ACC_CATS:
+            continue
+        if str(r[ix["品牌"]] or "").strip() != "ITO":
+            continue
+        name = r[ix["货品名称"]]
+        if not name:
+            continue
+        if any(k in str(name) for k in ACC_VIRTUAL_KEYS):
+            n_virtual += 1
+            continue
+        item = {
+            "code": str(r[ix["商家编码"]] or "").strip(),
+            "sku": (str(r[ix["货品编码"]] or "").strip() if ix["货品编码"] is not None else ""),
+            "name": name,
+            "short": str(r[ix["货品简称"]] or "").strip(),
+            "cat": cat,
+            "series": parse_series(name),
+            "price": num(r[ix["零售价"]]),
+            "kf": num(r[ix["可用库存"]]),        # 实证对齐：旧「可发库存」
+            "stock": num(r[ix["正品库存"]]),     # 实证对齐：旧「库存」
+        }
+        item["status"] = "停采" if cat.startswith("停采") else ""
+        item["lifecycle"] = item["status"] or LIFE_ON_SALE
+        out.append(item)
+    print("[info] 配件赠品：%s 补入 %d 条（剔除虚拟卡券 %d 条）"
+          % (os.path.basename(p), len(out), n_virtual), file=sys.stderr)
+    return out
+
+
 def _fill_batches(sku_row, rec):
     """把 per_sku 的 by_date 分批明细写入 SKU —— 陆续到货的唯一事实源。
     2026-10-27 新增：此前只写 arrival_eta=最早一天 + arrival_qty=跨期合计，
@@ -870,6 +942,20 @@ def compute(path=XLSX_PATH):
             item["lifecycle"] = item["status"] or LIFE_ON_SALE
             accessories.append(item)
 
+    # 配件/赠品兜底（2026-11-20）：旧源表不再导出这 4 个分类 → 从 ERP 全量导出补。
+    # 优先级：旧表有就用旧表（将来若恢复导出自动切回），旧表没有才补。
+    accessories_src = ""
+    if accessories:
+        accessories_src = "库存-每日.xlsx"
+    else:
+        _acc = load_accessories_from_full_export()
+        if _acc:
+            accessories = _acc
+            accessories_src = os.path.basename(ACC_FULL_EXPORT) + "（ERP 全量导出）"
+        else:
+            print("[warn] 配件赠品无可用数据源（旧表不导出该分类、全量导出不可用）",
+                  file=sys.stderr)
+
     # ===== 2. 到货进度 =====
     # 优先级：① 入库明细同步.xlsx（取最新日期 sheet，按货品编号关联）② 供应链提货计划表（按条形码关联）
     global_by_date = {}        # date_str -> {qty, skus:[]}
@@ -1062,7 +1148,7 @@ def compute(path=XLSX_PATH):
         })
 
     result = {
-        "version": "0.13.10",
+        "version": "0.13.11",
         "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "source_date": TODAY.isoformat(),
         "has_arrival_plan": arrival_ready,
@@ -1113,6 +1199,7 @@ def compute(path=XLSX_PATH):
         "arrival_timeline": arrival_timeline,
         "catalog": catalog,
         "accessories": accessories,
+        "accessories_source": accessories_src,   # 配件赠品数据来源（2026-11-20：旧表已不导出该类）
         "skus": skus,
         "prelaunch_gate": [
             {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),

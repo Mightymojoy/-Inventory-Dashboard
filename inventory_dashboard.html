@@ -1019,11 +1019,14 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
 
   function renderAccessory(){
     var rows=DATA.accessories||[];
+    /* 2026-11-20：旧源表已不导出配件/赠品分类，改由 ERP 全量导出补入。
+       副标题显式标注数据源，避免以后又出现「数据凭空消失/凭空出现」说不清的情况。 */
+    var accSrc=DATA.accessories_source?'　数据源：'+DATA.accessories_source:'';
     makeFilterTable(rows,{
       catId:'accCat',searchId:'accSearch',
       tableId:'accTable',countId:'accCount',subId:'accSub',
       sortBy:'cat',
-      defaultSub:'旅行箱配件 + 赠品（含停采）',
+      defaultSub:'旅行箱配件 + 赠品（含停采）'+accSrc,
       cols:[
         {k:'cat'},{k:'code'},
         {k:'name',cls:'name'},{k:'short'},
