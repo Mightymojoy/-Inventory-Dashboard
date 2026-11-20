@@ -174,7 +174,11 @@ def build_message(data):
             out.append(f"- ……其余 {rest} 条见看板")
 
     out.append("")
-    out.append("> 口径与看板一致：缺货=在售且可发≤0；停采 / 未上市 / 定制不计入")
+    # 2026-11-20 上市切换：原「未上市」判据停用，可发≤0 但首批货未到仓的改判「待铺货」，
+    # 同样不计入缺货。尾注必须跟着改，否则群里的读者会以为还有「未上市」这一类被排除。
+    n_st = sum(1 for s in skus if s.get("level") == "待铺货")
+    out.append("> 口径与看板一致：缺货=在售且可发≤0；停采 / 待铺货 / 定制不计入"
+               + ("（今日待铺货 %d 个：已上市、首批货未到仓）" % n_st if n_st else ""))
     out.append("📊 完整看板：https://ito-inventory-dashboard.vercel.app")
     return "\n".join(out)
 

@@ -51,7 +51,7 @@ URGENT_DAYS = 7      # 周转 < 7  -> 急需关注
 RISK_DAYS = 15       # 周转 < 15 -> 缺货风险（沿用"周转低于15天自动预警"）
 OVERSTOCK_DAYS = 90  # 周转 > 90 -> 滞销
 
-LEVEL_ORDER = ["缺货", "急需关注", "缺货风险", "安全", "滞销"]
+LEVEL_ORDER = ["缺货", "急需关注", "缺货风险", "安全", "滞销", "待铺货"]
 LEVEL_COLOR = {
     "缺货": "#d9534f",
     "急需关注": "#e8893b",
@@ -61,7 +61,28 @@ LEVEL_COLOR = {
     "定制": "#9aa7b0",
     "停采": "#8b8f96",      # 生命周期：停采（灰，且永不进健康度环图）
     "未上市": "#5b7fa6",    # 生命周期：未上市（蓝灰）
+    "待铺货": "#7e9bb8",    # 上市切换期：已上市但首批货未到仓（蓝灰，不计缺货）
 }
+
+# ---------------- 上市切换（2026-11-20 老大指令）----------------
+# 背景：老大 2026-11-20「把未上市的 SKU 加到到在售商品，目前开始切换了」，并确认
+# 「全部 72 条全切」+「可发≤0 的标待铺货，不计缺货」。
+#
+# 原「未上市」三条判据（名称含 FIND ITO / UPCOMING_EXTRA 名称片段 / UPCOMING_CODES 编码）
+# 全部停用，常量与其明细**保留**，供审计与回滚（把开关改回 True 即恢复旧口径）。
+# 停用理由（实跑取证，2026-11-20）：
+#   72 条未上市中，13 条有明显销量（PISTACHIO PLUS 炭黑20 日均 32.29、
+#   PISTACHIO STRIPED 炭黑20 日均 15.57），说明 FIND ITO 后缀不等于「未上市」；
+#   老款 PISTACHIO STRIPED 可发 1205 件仍在正常出货。
+UPCOMING_MARK_ACTIVE = False
+
+# 切换期「待铺货」：新品已上市、但个别颜色/尺寸首批货尚未到仓，可发=0。
+# 这类既不该占「缺货」（那是需要人立刻行动的指标），也不该回去当「未上市」（已经上市在卖）。
+# 判据（四条全中）：level==缺货 + 该 SKU 从未出现在入库明细 + 无在途 + 属于本次切换范围。
+# 逾期自动失效：STOCKING_UP_UNTIL 之后按正常缺货口径判，避免「待铺货」变成永久避风港。
+LEVEL_STOCKING = "待铺货"
+STOCKING_UP_UNTIL = datetime.date(2026, 12, 20)
+
 
 # ---------------- 生命周期（2026-10-27 新增）----------------
 # level 与 lifecycle 是**两个正交维度**：
@@ -109,6 +130,11 @@ UPCOMING_CODES = {
     "6979918615276": "VANITY 瑾紫4L",
     "6979918615283": "VANITY 晴蓝4L",
 }
+
+# 切换期「待铺货」名单（2026-11-20）：沿用上面 11 个编码，语义由「未上市」改为
+# 「已上市、首批货未到」。PISTACHIO 三条线不进名单，靠「同系列兄弟已到货」自动识别。
+# 维护：货到齐后无需删，可发>0 即自动退出待铺货；STOCKING_UP_UNTIL 之后整体失效。
+STOCKING_UP_CODES = set(UPCOMING_CODES.keys())
 
 # 停采 / 在售主要以 ERP「分类」字段为依据（2026-10-27 老大确认）：
 #   「停采旅行箱」「停采包袋」「停采赠品」「停采其他」… → 停采
@@ -239,13 +265,16 @@ def detect_lifecycle(name, cat, code=""):
     定制必须排在分类停采之前：定制款可发=0 是 B 端订单常态，不是缺货。
     """
     upper = (name or "").upper()
-    if UPCOMING_MARK in upper:
-        return LIFE_UPCOMING, "名称含 %s（尚未上架）" % UPCOMING_MARK
-    for frag, why in UPCOMING_EXTRA:
-        if frag in (name or ""):
-            return LIFE_UPCOMING, why
-    if code and str(code).strip() in UPCOMING_CODES:
-        return LIFE_UPCOMING, "ERP 未标记但未上市（人工名单 %s）" % UPCOMING_CODES[str(code).strip()]
+    # 2026-11-20 起三条「未上市」判据整体停用（UPCOMING_MARK_ACTIVE=False），
+    # 老大指令：这批商品「目前已开始切换」，全部归入在售。改回 True 即恢复旧口径。
+    if UPCOMING_MARK_ACTIVE:
+        if UPCOMING_MARK in upper:
+            return LIFE_UPCOMING, "名称含 %s（尚未上架）" % UPCOMING_MARK
+        for frag, why in UPCOMING_EXTRA:
+            if frag in (name or ""):
+                return LIFE_UPCOMING, why
+        if code and str(code).strip() in UPCOMING_CODES:
+            return LIFE_UPCOMING, "ERP 未标记但未上市（人工名单 %s）" % UPCOMING_CODES[str(code).strip()]
     if cat in MADE_TO_ORDER:
         return LIFE_CUSTOM, "定制分类"
     if str(cat or "").startswith("停采"):
@@ -536,41 +565,66 @@ def load_arrival_first_seen(path=None):
 
 
 def apply_prelaunch_gate(skus, arrival_path=None, stale_days=None, catalog=None):
-    """把「首批货从未到仓」的伪缺货改判为未上市，返回改判明细（供日志/页面说明）。
+    """上市切换（2026-11-20 改造）：把「已上市但首批货未到仓」的缺货分两类处理。
+
+    过渡期内（TODAY <= STOCKING_UP_UNTIL）→ level 标「待铺货」，**不计缺货**、不进钉钉。
+    过渡期后 → 退回原行为，判「未上市·首批未到」。
+
+    判据（对 level==缺货 且 lifecycle==在售 的 SKU）：
+      1) 该 SKU 从未出现在入库明细（从没到过货）—— 到过货就是真缺货，不动
+      2) 在途量 = 0 —— 有在途属正常补货等待，不动
+      3) 同系列其他 SKU 已到货 **或** 命中 STOCKING_UP_CODES
+         （后者补「PACKING CUBE / VANITY 这类整体不进入库明细」的品类盲区）
 
     stale_days 仅供测试注入（模拟历史视角时，入库明细必然是「旧」的）。
-    catalog 传入时同步改判：商品总览与缺货口径必须一致，否则会出现
-    「总览说在售、缺货清单里没有、未上市也不含它」的三方打架。
+    catalog 传入时同步状态：商品总览与缺货口径必须一致，否则会出现
+    「总览说缺货、缺货清单里没有、未上市也不含它」的三方打架。
+
+    返回 (gate_list, stocking_list)，均为被改判的 SKU 列表。
     """
     if stale_days is None:
         stale_days = ARRIVAL_GATE_STALE_DAYS
     first, latest = load_arrival_first_seen(arrival_path)
     if not first:
-        print("[info] 上市前闸门: 无入库明细或无批次 sheet，跳过", file=sys.stderr)
-        return []
+        print("[info] 上市切换: 无入库明细或无批次 sheet，跳过", file=sys.stderr)
+        return [], []
     try:
         stale = (TODAY - datetime.date.fromisoformat(latest)).days
     except Exception:
         stale = None
     if stale is None or stale > stale_days:
-        print("[warn] 上市前闸门: 入库明细最新批次 %s（%s 天前）超过 %d 天，本次不启用（避免旧数据误判）"
+        print("[warn] 上市切换: 入库明细最新批次 %s（%s 天前）超过 %d 天，本次不启用（避免旧数据误判）"
               % (latest, stale, stale_days), file=sys.stderr)
-        return []
+        return [], []
 
+    in_window = TODAY <= STOCKING_UP_UNTIL
     by_series = {}
     for s in skus:
         by_series.setdefault(s.get("series") or "", []).append(s)
 
-    changed = []
+    changed, stocking = [], []
     for s in skus:
         if s.get("level") != "缺货" or s.get("lifecycle") != LIFE_ON_SALE:
             continue
-        if (s.get("sku") or "") in first:
+        code = str(s.get("sku") or "").strip()      # sku 列 → 入库明细的键
+        biz_code = str(s.get("code") or "").strip()  # 商家编码 → STOCKING_UP_CODES 的键
+        if code in first:
             continue                      # 到过货 → 真实缺货，不动
         if float(s.get("in_transit") or 0) > 0:
             continue                      # 有在途 → 正常补货等待
         sibs = [x for x in by_series.get(s.get("series") or "", [])
                 if x is not s and (x.get("sku") or "") in first]
+        # ---- 过渡期内：待铺货（不计缺货）----
+        # 注意两个编码体系：入库明细按「sku 列」匹配，STOCKING_UP_CODES 按「商家编码」匹配。
+        # 混用会静默失效（2026-11-20 实测踩到：PACKING CUBE/VANITY 11 条漏判成缺货）。
+        if in_window and (sibs or biz_code in STOCKING_UP_CODES):
+            s["level"] = LEVEL_STOCKING
+            s["stocking_reason"] = (
+                "已上市·首批未到仓（入库明细无到货记录，%s）"
+                % ("同系列已有 %d 个到货" % len(sibs) if sibs else "品类整体不进入库明细"))
+            stocking.append(s)
+            continue
+        # ---- 过渡期后：退回原行为，判未上市·首批未到 ----
         if not sibs:
             continue                      # 系列整体不进入库明细 → 不敢判，保守放过
         s["lifecycle"] = LIFE_UPCOMING
@@ -579,21 +633,34 @@ def apply_prelaunch_gate(skus, arrival_path=None, stale_days=None, catalog=None)
         s["level"] = LIFE_UPCOMING
         changed.append(s)
 
+    if stocking:
+        print("[ok] 上市切换·待铺货: %d 个 SKU 已上市但首批未到（不计缺货，过渡期至 %s）→ %s"
+              % (len(stocking), STOCKING_UP_UNTIL.isoformat(), "、".join(
+                  "%s/%s%s" % (x.get("series"), x.get("color"), x.get("size"))
+                  for x in stocking[:8]) + ("…" if len(stocking) > 8 else "")),
+              file=sys.stderr)
     if changed:
         print("[ok] 上市前闸门: %d 个 SKU 判为未上市·首批未到（不计缺货）→ %s"
               % (len(changed), "、".join(
                   "%s/%s%s" % (x.get("series"), x.get("color"), x.get("size")) for x in changed)),
               file=sys.stderr)
-        # 商品总览同步（catalog 是独立用 detect_lifecycle 判的，不同步就会自相矛盾）
-        if catalog:
-            by_sku = {x.get("sku"): x for x in changed}
-            for c in catalog:
-                t = by_sku.get(c.get("sku"))
-                if t:
-                    c["status"] = LIFE_UPCOMING
-                    c["lifecycle"] = LIFE_UPCOMING
-                    c["lifecycle_reason"] = t.get("lifecycle_reason") or ""
-    return changed
+
+    # 商品总览同步（catalog 独立用 detect_lifecycle 判 status，不同步就会自相矛盾）
+    if catalog and (changed or stocking):
+        by_sku = {x.get("sku"): x for x in changed}
+        for c in catalog:
+            t = by_sku.get(c.get("sku"))
+            if t:
+                c["status"] = LIFE_UPCOMING
+                c["lifecycle"] = LIFE_UPCOMING
+                c["lifecycle_reason"] = t.get("lifecycle_reason") or ""
+        by_sku2 = {x.get("sku"): x for x in stocking}
+        for c in catalog:
+            t = by_sku2.get(c.get("sku"))
+            if t:
+                c["status"] = LEVEL_STOCKING
+                c["stocking_reason"] = t.get("stocking_reason") or ""
+    return changed, stocking
 
 
 def compute(path=XLSX_PATH):
@@ -867,10 +934,11 @@ def compute(path=XLSX_PATH):
     else:
         print("[info] 未检测到到货进度数据（入库明细同步 / 供应链提货计划表），到货日历不可用", file=sys.stderr)
 
-    # ===== 2.5 上市前「首批货未到仓」闸门（2026-10-29）=====
+    # ===== 2.5 上市切换 + 「首批货未到仓」闸门（2026-10-29 首版，2026-11-20 改造）=====
     # 必须在汇总指标之前跑：改判后 lifecycle/level 变了，缺货 KPI、生命周期分解、
-    # 事件台账（只认在售）都要按改判后的结果算，否则闸门等于没生效。
-    prelaunch_gate = apply_prelaunch_gate(skus, catalog=catalog)
+    # 事件台账（只认在售且缺货）都要按改判后的结果算，否则等于没生效。
+    # 返回 (判未上市的, 标待铺货的)，两者都需在输出里留痕。
+    prelaunch_gate, stocking_up = apply_prelaunch_gate(skus, catalog=catalog)
 
     # ===== 3. 汇总指标 =====
     # 生命周期计数（2026-10-27）：缺货 / 预警只可能由「在售」产生
@@ -905,6 +973,8 @@ def compute(path=XLSX_PATH):
         "total_kf": round(sum(s["kf"] for s in skus), 1),
         "total_value": round(sum(s["value"] for s in skus), 1),
         "out_of_stock": sum(1 for s in skus if s["level"] == "缺货"),
+        # 待铺货（2026-11-20）：已上市、首批货未到仓。单独计数，绝不并入缺货。
+        "stocking_up": sum(1 for s in skus if s["level"] == LEVEL_STOCKING),
         "warning": sum(1 for s in skus if s["level"] in ("急需关注", "缺货风险")),
         "in_transit": round(sum(s["in_transit"] for s in skus), 1),
         "arrival_week": round(future_week_total, 1),
@@ -1025,6 +1095,15 @@ def compute(path=XLSX_PATH):
                 ],
                 "discontinued_prefix": "停采",
                 "basis": "ERP 分类字段：停采* → 停采，其余在售分类 → 在售",
+                # 2026-11-20：三条未上市判据停用，改为「已上市 + 待铺货」两态
+                "upcoming_mark_active": UPCOMING_MARK_ACTIVE,
+                "stocking_up_until": STOCKING_UP_UNTIL.isoformat(),
+                "stocking_up_codes": sorted(STOCKING_UP_CODES),
+                "stocking_up": [
+                    {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),
+                     "size": x.get("size"), "why": x.get("stocking_reason")}
+                    for x in stocking_up
+                ],
             },
         },
         "kpi": kpi,
@@ -1039,6 +1118,11 @@ def compute(path=XLSX_PATH):
             {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),
              "size": x.get("size"), "cat": x.get("cat"), "kf": x.get("kf"),
              "why": x.get("lifecycle_reason")} for x in prelaunch_gate
+        ],
+        "stocking_up": [
+            {"sku": x.get("sku"), "series": x.get("series"), "color": x.get("color"),
+             "size": x.get("size"), "cat": x.get("cat"), "kf": x.get("kf"),
+             "why": x.get("stocking_reason")} for x in stocking_up
         ],
     }
     return result

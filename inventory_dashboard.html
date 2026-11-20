@@ -443,7 +443,7 @@
         </div>
         <div class="filter-item">
           <label>已排除记录</label>
-          <label class="chk-inline"><input type="checkbox" id="soInclExcluded"><span>含未上市（默认隐藏）</span></label>
+          <label class="chk-inline"><input type="checkbox" id="soInclExcluded"><span>含历史排除记录（默认隐藏）</span></label>
         </div>
         <div class="filter-meta"><span class="badge" id="soCount"></span><span class="badge" id="soStat" style="background:#e8893b"></span></div>
       </div>
@@ -590,7 +590,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       renderStockout();
     };
     document.getElementById('ovSub').textContent='在售 '+DATA.kpi.stocked_sku+' SKU · 定制 '+DATA.kpi.custom_sku
-      +' · 停采 '+DATA.kpi.discontinued_sku+' · 未上市 '+DATA.kpi.upcoming_sku;
+      +' · 停采 '+DATA.kpi.discontinued_sku+' · 待铺货 '+(DATA.kpi.stocking_up||0);
   }
 
   function renderKPI(){
@@ -602,7 +602,10 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       {ic:'alert',v:k.out_of_stock,l:'缺货 SKU',s:'仅计在售商品',cls:'alert'},
       {ic:'alert',v:k.warning,l:'预警 SKU',s:'急需+风险',cls:'warn'},
       {ic:'layers',v:k.discontinued_sku,l:'停采 SKU',s:'分类停采+人工名单·'+(k.discontinued_has_stock||0)+'个仍有货',cls:'off'},
-      {ic:'layers',v:k.upcoming_sku,l:'未上市 SKU',s:'FIND ITO+人工名单+首批未到，不计缺货',cls:'off'},
+      /* 2026-11-20 上市切换：原「未上市 SKU」卡改为「待铺货 SKU」。
+         未上市判据已停用（72 条全部转在售），改看「已上市但首批货未到仓」的数量，
+         这类不计缺货，与缺货卡严格分开，避免被误读成缺货。 */
+      {ic:'layers',v:(k.stocking_up||0),l:'待铺货 SKU',s:'已上市·首批未到仓，不计缺货',cls:'off'},
       {ic:'truck',v:fmt(k.in_transit),l:'在途总量',s:'采+产+调拨'},
       {ic:'truck',v:fmt(k.arrival_week),l:'未来一周到货',s:'提货计划'},
       {ic:'box',v:k.custom_sku,l:'定制(按需)SKU',s:'可发=0 属正常'}
@@ -805,7 +808,7 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
         return;
       }
       var base='缺货 '+k.out_of_stock+' · 预警 '+k.warning
-        +'（仅在售商品；停采 '+k.discontinued_sku+' · 未上市 '+k.upcoming_sku+' 不计入缺货）';
+        +'（仅在售商品；停采 '+k.discontinued_sku+' · 待铺货 '+(k.stocking_up||0)+' 不计入缺货）';
       document.getElementById('alertSub').textContent=tag.length?('当前：'+tag.join(' / ')+' ｜ '+base):base;
     }
     document.getElementById('alertLevel').onchange=render;
@@ -914,6 +917,8 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     if(hasCustom) statusOptions.push('定制');
     if(skus.some(function(s){return s.level==='停采';})) statusOptions.push('停采');
     if(skus.some(function(s){return s.level==='未上市';})) statusOptions.push('未上市');
+    /* 2026-11-20 上市切换：待铺货是新的 level，必须进筛选，否则 53 个 SKU 无法单独查看 */
+    if(skus.some(function(s){return s.level==='待铺货';})) statusOptions.push('待铺货');
     makeFilterTable(skus,{
       catId:'catFilter',seriesId:'seriesFilter',statusId:'catStatus',
       searchId:'catSearch',
@@ -1089,7 +1094,9 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
       subTxt='全部 '+pool.length+' 条（当前在缺 '+act.length+' · 历史 '+past.length+'）';
       emptyTxt='暂无缺货记录';
     }
-    if(nEx) subTxt+=' · 已排除 '+nEx+' 条未上市'+(withEx?'（已显示）':'（勾选「含未上市」可查看）');
+    /* 2026-11-20：未上市判据已停用，这里的 nEx 是**历史档案**里按旧口径排除的记录，
+       不能再说成「N 条未上市」，否则读者会以为现在还有 N 个未上市商品。 */
+    if(nEx) subTxt+=' · 另有 '+nEx+' 条历史排除记录（原「未上市」口径）'+(withEx?'（已显示）':'（勾选「含历史排除」可查看）');
     makeFilterTable(rows,{
       catId:'soCat', seriesId:'soSeries', statusId:'soStatus',
       statusOptions:['缺货中','已恢复','已停采','已下市'],
@@ -1134,25 +1141,32 @@ window.onerror=function(m,s,l,c,e){var b=document.getElementById('jsError');b.st
     html+='<p><b>健康度阈值</b>（周转天数）：急需关注 &lt; '+c.urgent_days+'　缺货风险 &lt; '+c.risk_days+'　安全 ≤ '+c.overstock_days+'　滞销 &gt; '+c.overstock_days+'。可发=0 即缺货（定制类除外）。</p>';
     /* 生命周期说明（2026-10-27） */
     var lr=c.life_rules||{};
-    html+='<p><b>生命周期</b>（2026-10-27 新增，与库存健康度<u>正交</u>）：<b>在售</b> / <b>停采</b> / <b>未上市</b> / <b>定制</b>。'
-      +'<b>缺货只统计在售商品</b> —— 停采不会补货、未上市本来没货，二者都不计入缺货与预警。</p>';
-    html+='<p><b>判定规则</b>：① 货品名称含 <code>'+(lr.upcoming_mark||'FIND ITO')+'</code> → <b>未上市</b>；'
-      +'② 定制分类 → <b>定制</b>；'
-      +'③ '+((lr.renewed_series||[]).map(function(x){return x.series+'（'+x.colors.join('/')+'）';}).join('、')||'PISTACHIO STRIPED（炭黑/烟白）')
+    html+='<p><b>生命周期</b>（2026-10-27 新增，与库存健康度<u>正交</u>）：<b>在售</b> / <b>停采</b> / <b>定制</b>。'
+      +'<b>缺货只统计在售商品</b> —— 停采不会补货，不计入缺货与预警。</p>';
+    html+='<p><b>判定规则</b>：① 定制分类 → <b>定制</b>；'
+      +'② '+((lr.renewed_series||[]).map(function(x){return x.series+'（'+x.colors.join('/')+'）';}).join('、')||'PISTACHIO STRIPED（炭黑/烟白）')
       +' 名称带 <code>'+(lr.year_mark||'2026')+'</code>版 或 <code>TRUNK</code> → 新版·在售，两者都没有 → 旧版·停采；'
-      +'④ 分类以「停采」开头 → <b>停采</b>。</p>';
-    /* 上市前「首批货未到仓」闸门（2026-10-29） */
-    var pl=(lr.upcoming_prelaunch||[]);
-    html+='<p><b>首批未到 ≠ 缺货</b>（2026-10-29 新增）：新品在 ERP 已建 SKU、首批货还没到仓时，'
-      +'可发为 0/负、名称也不带 FIND ITO，旧口径会误判成「在售·缺货」并持续累计缺货天数。'
-      +'现改为：<b>该 SKU 在『入库明细同步』全部批次中从无到货记录、且同系列其他 SKU 已有到货、且无在途</b>'
-      +' → 判 <b>未上市·首批未到</b>，不计缺货。';
-    if(pl.length){
-      html+='<br>当前命中 '+pl.length+' 个：'+pl.map(function(x){
+      +'③ 分类以「停采」开头 → <b>停采</b>。</p>';
+    /* 上市切换（2026-11-20）：原「未上市」判据全线停用 */
+    html+='<p><b>上市切换</b>（2026-11-20）：原「未上市」三条判据（名称含 <code>'+(lr.upcoming_mark||'FIND ITO')+'</code>、'
+      +'人工名称片段、人工编码名单）已<b>停用</b>，涉及 72 个 SKU 全部归入<b>在售</b>。'
+      +'旧名单常量保留在代码中，改一个开关即可回滚。</p>';
+    /* 待铺货（承 2026-10-29「首批未到」闸门，语义升级） */
+    var su=(lr.stocking_up||[]);
+    html+='<p><b>待铺货 ≠ 缺货</b>（2026-11-20，承 10-29 首批未到闸门）：已上市、但首批货还没到仓时，可发为 0/负。'
+      +'判据（需同时满足）：<b>该 SKU 在『入库明细同步』全部批次中从无到货记录、且无在途、'
+      +'且（同系列其他 SKU 已有到货 或 属原有「系列整体不进入库明细」的品类）</b>'
+      +' → 判 <b>待铺货</b>，<b>不计缺货</b>、不进钉钉。'
+      +'过渡期至 <b>'+(lr.stocking_up_until||'')+'</b>，逾期自动按正常缺货口径判，避免变成永久避风港。</p>';
+    if(su.length){
+      html+='<p>当前待铺货 '+su.length+' 个：'+su.map(function(x){
         return (x.series||'')+' '+(x.color||'')+(x.size||'');
-      }).join('、')+'。';
+      }).join('、')+'。</p>';
     }
-    html+='</p>';
+    var pl=(lr.upcoming_prelaunch||[]);
+    if(pl.length){
+      html+='<p>另：过渡期结束后仍判「未上市·首批未到」的有 '+pl.length+' 个。</p>';
+    }
     html+='<p><b>货值口径</b>：按零售价（数据源固定成本价为 0，不可用）。<b>在售分类</b>：'+((c.on_sale||[]).join('、'))+'。</p>';
     html+='<p><b>数据铁律</b>：看板仅读取 Excel，绝不回写；无数据不展示；对照源表逐项核对。</p>';
     document.getElementById('setBody').innerHTML=html;
